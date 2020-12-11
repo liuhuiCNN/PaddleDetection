@@ -52,6 +52,13 @@ logging.basicConfig(level=logging.INFO, format=FORMAT)
 logger = logging.getLogger(__name__)
 
 
+# set seed
+np.random.seed = 1234
+#paddle.seed(1234)
+#paddle.manual_seed(1234)
+#paddle.framework.manual_seed(1234)
+
+
 def main():
     env = os.environ
     FLAGS.dist = 'PADDLE_TRAINER_ID' in env \
@@ -61,12 +68,14 @@ def main():
     if FLAGS.dist:
         trainer_id = int(env['PADDLE_TRAINER_ID'])
         local_seed = (99 + trainer_id)
+        local_seed = 1234
         random.seed(local_seed)
         np.random.seed(local_seed)
 
     if FLAGS.enable_ce:
-        random.seed(0)
-        np.random.seed(0)
+        tmp_seed = 1234
+        random.seed(tmp_seed)
+        np.random.seed(tmp_seed)
 
     cfg = load_config(FLAGS.config)
     merge_config(FLAGS.opt)
@@ -101,8 +110,14 @@ def main():
     startup_prog = fluid.Program()
     train_prog = fluid.Program()
     if FLAGS.enable_ce:
-        startup_prog.random_seed = 1000
-        train_prog.random_seed = 1000
+        tmp_seed = 1234
+        startup_prog.random_seed = tmp_seed
+        train_prog.random_seed = tmp_seed
+
+    tmp_seed = 1234
+    startup_prog.random_seed = tmp_seed
+    train_prog.random_seed = tmp_seed
+    
     with fluid.program_guard(train_prog, startup_prog):
         with fluid.unique_name.guard():
             model = create(main_arch)
