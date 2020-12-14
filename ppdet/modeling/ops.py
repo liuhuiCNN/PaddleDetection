@@ -1064,9 +1064,12 @@ class LibraBBoxAssigner(object):
             box_to_gt_ind_map = np.zeros((boxes.shape[0]), dtype=np.int32)
             if len(gt_boxes) > 0:
                 proposal_to_gt_overlaps = bbox_overlaps(boxes, gt_boxes)
+                print('proposal_to_gt_overlaps', proposal_to_gt_overlaps.shape, proposal_to_gt_overlaps.mean())
 
                 overlaps_argmax = proposal_to_gt_overlaps.argmax(axis=1)
+                print('overlaps_argmax,', overlaps_argmax.shape, overlaps_argmax, overlaps_argmax.mean())
                 overlaps_max = proposal_to_gt_overlaps.max(axis=1)
+                print('overlaps_max,', overlaps_max.shape, overlaps_max, overlaps_max.mean())
                 # Boxes which with non-zero overlap with gt boxes
                 overlapped_boxes_ind = np.where(overlaps_max > 0)[0]
 
@@ -1147,6 +1150,8 @@ class LibraBBoxAssigner(object):
             # Scale rois
             sampled_rois = sampled_boxes * im_scale
 
+            print('libar sampled_rois', sampled_rois.shape, sampled_rois.mean(), sampled_labels.shape, sampled_labels.mean(),
+                  'fg_inds', len(fg_inds), sum(fg_inds), 'bg_inds', len(bg_inds), sum(bg_inds))
             # Faster RCNN blobs
             frcn_blobs = dict(
                 rois=sampled_rois,

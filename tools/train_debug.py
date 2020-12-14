@@ -216,38 +216,116 @@ def main():
     elif cfg.pretrain_weights:
         checkpoint.load_params(
             exe, train_prog, cfg.pretrain_weights, ignore_params=ignore_params)
+        
+    '''
+    'res2c.add.output.5.tmp_1',
+    'res3d.add.output.5.tmp_1',
+    'res4f.add.output.5.tmp_1',
+    'res5c.add.output.5.tmp_1',
+    
+    'rpn_cls_logits_fpn2.tmp_1',
+    'rpn_cls_logits_fpn3.tmp_1',
+    'rpn_cls_logits_fpn4.tmp_1',
+    'rpn_cls_logits_fpn5.tmp_1',
+    'rpn_cls_logits_fpn6.tmp_1',
+    'rpn_bbox_pred_fpn2.tmp_1',
+    'rpn_bbox_pred_fpn3.tmp_1',
+    'rpn_bbox_pred_fpn4.tmp_1',
+    'rpn_bbox_pred_fpn5.tmp_1',
+    'rpn_bbox_pred_fpn6.tmp_1',
+    
+    'anchor_generator_0.tmp_0',
+    'anchor_generator_1.tmp_0',
+    'anchor_generator_2.tmp_0',
+    'anchor_generator_3.tmp_0',
+    'anchor_generator_4.tmp_0',
+    'anchor_generator_0.tmp_1',
+    'anchor_generator_1.tmp_1',
+    'anchor_generator_2.tmp_1',
+    'anchor_generator_3.tmp_1',
+    'anchor_generator_4.tmp_1',
+    
+    # anchor
+    'anchor_generator_3.tmp_0',
+    'anchor_generator_3.tmp_1',
+    
+    # anchor concat
+    'concat_0.tmp_0',
+    'concat_1.tmp_0',
+    
+    # rois
+    'collect.tmp_0',
+    'concat_2.tmp_0',
+    'concat_3.tmp_0',
+    
+    '''
+
+    check_list0 = [
+        # fpn_feat
+        'conv_rpn_fpn2.tmp_2',
+        'conv_rpn_fpn3.tmp_2',
+        'conv_rpn_fpn4.tmp_2',
+        'conv_rpn_fpn5.tmp_2',
+        'conv_rpn_fpn6.tmp_2',
+        
+        # for rpn loss
+        'cast_0.tmp_0', # score_tgt
+        'gather_0.tmp_0', # score_pred
+        
+        # rois_fpn and roi_probs_fpn
+        'generate_proposals_0.tmp_0',
+        'generate_proposals_0.tmp_1'
+        'generate_proposals_1.tmp_0',
+        'generate_proposals_1.tmp_1'
+        'generate_proposals_2.tmp_0',
+        'generate_proposals_2.tmp_1'
+        'generate_proposals_3.tmp_0',
+        'generate_proposals_3.tmp_1'
+        'generate_proposals_4.tmp_0',
+        'generate_proposals_4.tmp_1'
+    ]
 
     check_list = [
-        'res2c.add.output.5.tmp_1',
-        'res3d.add.output.5.tmp_1',
-        'res4f.add.output.5.tmp_1',
-        'res5c.add.output.5.tmp_1',
-        'collect.tmp_0',
+        # fpn_feat
+        'conv_rpn_fpn2.tmp_2',
+        'conv_rpn_fpn3.tmp_2',
+        'conv_rpn_fpn4.tmp_2',
+        'conv_rpn_fpn5.tmp_2',
+        'conv_rpn_fpn6.tmp_2',
+    
+        # rois_fpn and roi_probs_fpn
+        'generate_proposals_0.tmp_0',
+        'generate_proposals_0.tmp_1'
+        'generate_proposals_1.tmp_0',
+        'generate_proposals_1.tmp_1'
+        'generate_proposals_2.tmp_0',
+        'generate_proposals_2.tmp_1'
+        'generate_proposals_3.tmp_0',
+        'generate_proposals_3.tmp_1'
+        'generate_proposals_4.tmp_0',
+        'generate_proposals_4.tmp_1'
+        
+        # for rpn loss
+        'cast_0.tmp_0',  # score_tgt
+        'gather_0.tmp_0',  # score_pred
+        
+        # debug
+        'mean_0.tmp_0',
+        'mean_1.tmp_0',
+        'mean_2.tmp_0',
+        'mean_3.tmp_0',
+        'mean_4.tmp_0',
+        
+        #
+        'concat_1.tmp_0',
+        'concat_0.tmp_0',
         'concat_2.tmp_0',
         'concat_3.tmp_0',
-        'rpn_cls_logits_fpn2.tmp_1',
-        'rpn_cls_logits_fpn3.tmp_1',
-        'rpn_cls_logits_fpn4.tmp_1',
-        'rpn_cls_logits_fpn5.tmp_1',
-        'rpn_cls_logits_fpn6.tmp_1',
-        'rpn_bbox_pred_fpn2.tmp_1',
-        'rpn_bbox_pred_fpn3.tmp_1',
-        'rpn_bbox_pred_fpn4.tmp_1',
-        'rpn_bbox_pred_fpn5.tmp_1',
-        'rpn_bbox_pred_fpn6.tmp_1',
-        'concat_0.tmp_0',
-        'concat_1.tmp_0',
-        'anchor_generator_0.tmp_0',
-        'anchor_generator_1.tmp_0',
-        'anchor_generator_2.tmp_0',
-        'anchor_generator_3.tmp_0',
-        'anchor_generator_4.tmp_0',
-        'anchor_generator_0.tmp_1',
-        'anchor_generator_1.tmp_1',
-        'anchor_generator_2.tmp_1',
-        'anchor_generator_3.tmp_1',
-        'anchor_generator_4.tmp_1',
+        'gt_bbox',
+        'is_crowd',
+        'im_info',
     ]
+    
     debug_var = []
     debug_key = []
 
@@ -323,7 +401,10 @@ def main():
                 print(k, np.array(paddle_param))
         for i in range(len(debug_var)):
             out = outs[-len(debug_var) + i]
-            print(debug_key[i], np.array(out).mean(), np.array(out).shape)
+            print(debug_key[i], np.array(out).mean(), np.array(out).sum(), np.array(out).shape)
+            np.save('npy/'+debug_key[i]+'.npy', np.array(out))
+            #out111 = out[0:-2, :]
+            #print(debug_key[i], np.array(out111).mean(), np.array(out111).sum(), np.array(out).shape)
 
         # use vdl-paddle to log loss
         if FLAGS.use_vdl:

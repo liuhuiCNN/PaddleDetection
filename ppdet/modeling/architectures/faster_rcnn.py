@@ -98,6 +98,7 @@ class FasterRCNN(object):
             body_feats, spatial_scale = self.fpn.get_output(body_feats)
 
         rois = self.rpn_head.get_proposals(body_feats, im_info, mode=mode)
+        print('rois', rois)
 
         if mode == 'train':
             rpn_loss = self.rpn_head.get_loss(im_info, gt_bbox, is_crowd)

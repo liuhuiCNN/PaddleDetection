@@ -1,0 +1,6 @@
+2020-12-11 13:49:22,315-INFO: iter: 0, lr: 0.002000, 'loss_cls': '0.212885', 'loss_bbox': '0.275820', 'loss_rpn_cls': '0.000264', 'loss_rpn_bbox': '0.005588', 'loss': '0.494556', eta: 0:00:00, batch_cost: 0.00003 sec, ips: 29330.79720 images/sec
+2020-12-11 13:49:49,160-INFO: iter: 1, lr: 0.002018, 'loss_cls': '0.134259', 'loss_bbox': '0.229924', 'loss_rpn_cls': '0.000128', 'loss_rpn_bbox': '0.005351', 'loss': '0.369662', eta: 0:05:13, batch_cost: 28.52058 sec, ips: 0.03506 images/sec
+2020-12-11 13:49:49,161-INFO: Save model to output/faster_rcnn_dcn_r50_vd_fpn_3x_server_side_debug/1.
+2020-12-11 13:50:24,717-INFO: iter: 2, lr: 0.002036, 'loss_cls': '0.111124', 'loss_bbox': '0.168758', 'loss_rpn_cls': '0.000097', 'loss_rpn_bbox': '0.004617', 'loss': '0.284596', eta: 0:05:25, batch_cost: 32.56712 sec, ips: 0.03071 images/sec
+2020-12-11 13:50:24,718-INFO: Save model to output/faster_rcnn_dcn_r50_vd_fpn_3x_server_side_debug/2.
+
