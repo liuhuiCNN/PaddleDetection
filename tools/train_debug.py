@@ -284,46 +284,88 @@ def main():
         'generate_proposals_4.tmp_0',
         'generate_proposals_4.tmp_1'
     ]
+    
+    print('\n\n')
 
     check_list = [
+        # backbone body_feats
+        'res2c.add.output.5.tmp_1',
+        'res3d.add.output.5.tmp_1',
+        'res4f.add.output.5.tmp_1',
+        'res5c.add.output.5.tmp_1',
+        
         # fpn_feat
         'conv_rpn_fpn2.tmp_2',
         'conv_rpn_fpn3.tmp_2',
         'conv_rpn_fpn4.tmp_2',
         'conv_rpn_fpn5.tmp_2',
         'conv_rpn_fpn6.tmp_2',
+        
+        # rpn conv feat
+        'rpn_cls_logits_fpn2.tmp_1',
+        'rpn_bbox_pred_fpn2.tmp_1',
+        'rpn_cls_logits_fpn3.tmp_1',
+        'rpn_bbox_pred_fpn3.tmp_1',
+        'rpn_cls_logits_fpn4.tmp_1',
+        'rpn_bbox_pred_fpn4.tmp_1',
+        'rpn_cls_logits_fpn5.tmp_1',
+        'rpn_bbox_pred_fpn5.tmp_1',
+        'rpn_cls_logits_fpn6.tmp_1',
+        'rpn_bbox_pred_fpn6.tmp_1',
+        
     
-        # rois_fpn and roi_probs_fpn
+        # anchor generate
+        'anchor_generator_0.tmp_0',
+        'anchor_generator_1.tmp_0',
+        'anchor_generator_2.tmp_0',
+        'anchor_generator_3.tmp_0',
+        'anchor_generator_4.tmp_0',
+        
+        # rois_list  generate_proposals_0.tmp_0
         'generate_proposals_0.tmp_0',
-        'generate_proposals_0.tmp_1'
         'generate_proposals_1.tmp_0',
-        'generate_proposals_1.tmp_1'
         'generate_proposals_2.tmp_0',
-        'generate_proposals_2.tmp_1'
         'generate_proposals_3.tmp_0',
-        'generate_proposals_3.tmp_1'
         'generate_proposals_4.tmp_0',
-        'generate_proposals_4.tmp_1'
         
-        # for rpn loss
-        'cast_0.tmp_0',  # score_tgt
-        'gather_0.tmp_0',  # score_pred
+        # collect_fpn_proposals [2000*4]
+        'collect.tmp_0'
         
-        # debug
+        # rpn_cls rpn_bbox anchor anchor_var
+        'concat_0.tmp_0',
+        'concat_0.tmp_0',
+        'concat_1.tmp_0',
+        'concat_2.tmp_0',
+        'concat_3.tmp_0',
+        'gt_bbox',
+        'is_crowd',
+        'im_info',
+    
+        # rois_before_bbox_assigner gt_class is_crowd gt_bbox im_info rois, bbox_targets, bbox_inside_weights, bbox_outside_weights
+        'collect.tmp_0',
+        'gt_class',
+        'is_crowd',
+        'gt_bbox',
+        'im_info',
+        '_generated_var_0',
+        '_generated_var_3',
+        '_generated_var_1',
+        '_generated_var_2',
+    
+    
+        # rpn loss input
+        # score_pred  loc_pred  score_tgt  loc_tgt  bbox_weight
         'mean_0.tmp_0',
         'mean_1.tmp_0',
         'mean_2.tmp_0',
         'mean_3.tmp_0',
         'mean_4.tmp_0',
         
-        #
-        'concat_1.tmp_0',
-        'concat_0.tmp_0',
-        'concat_2.tmp_0',
-        'concat_3.tmp_0',
-        'gt_bbox',
-        'is_crowd',
-        'im_info',
+        # for rpn loss
+        # for rpn loss
+        'cast_0.tmp_0',  # score_tgt
+        'gather_0.tmp_0',  # score_pred
+        '_generated_var_0',
     ]
     
     debug_var = []
@@ -371,7 +413,8 @@ def main():
         vdl_writer = LogWriter(FLAGS.vdl_log_dir)
         vdl_loss_step = 0
         vdl_mAP_step = 0
-
+    cfg.max_iters = 12
+    start_iter = 0
     for it in range(start_iter, cfg.max_iters):
         start_time = end_time
         end_time = time.time()
@@ -403,8 +446,6 @@ def main():
             out = outs[-len(debug_var) + i]
             print(debug_key[i], np.array(out).mean(), np.array(out).sum(), np.array(out).shape)
             np.save('npy/'+debug_key[i]+'.npy', np.array(out))
-            #out111 = out[0:-2, :]
-            #print(debug_key[i], np.array(out111).mean(), np.array(out111).sum(), np.array(out).shape)
 
         # use vdl-paddle to log loss
         if FLAGS.use_vdl:
@@ -418,7 +459,7 @@ def main():
         if it % cfg.log_iter == 0 and (not FLAGS.dist or trainer_id == 0):
             ips = float(cfg['TrainReader']['batch_size']) / time_cost
             strs = 'iter: {}, lr: {:.6f}, {}, eta: {}, batch_cost: {:.5f} sec, ips: {:.5f} images/sec'.format(
-                it, np.mean(outs[-1]), logs, eta, time_cost, ips)
+                it, np.mean(outs[len(train_values)-1]), logs, eta, time_cost, ips)
             logger.info(strs)
 
         # NOTE : profiler tools, used for benchmark
@@ -434,7 +475,7 @@ def main():
             save_name = str(it) if it != cfg.max_iters - 1 else "model_final"
             if 'use_ema' in cfg and cfg['use_ema']:
                 exe.run(ema.apply_program)
-            checkpoint.save(exe, train_prog, os.path.join(save_dir, save_name))
+            #checkpoint.save(exe, train_prog, os.path.join(save_dir, save_name))
 
             if FLAGS.eval:
                 # evaluation

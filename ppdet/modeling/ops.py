@@ -1062,6 +1062,7 @@ class LibraBBoxAssigner(object):
             boxes = np.vstack([gt_boxes, rpn_rois])
             gt_overlaps = np.zeros((boxes.shape[0], class_nums))
             box_to_gt_ind_map = np.zeros((boxes.shape[0]), dtype=np.int32)
+            print('bbox', boxes.shape, 'gt_boxes', gt_boxes)
             if len(gt_boxes) > 0:
                 proposal_to_gt_overlaps = bbox_overlaps(boxes, gt_boxes)
                 print('proposal_to_gt_overlaps', proposal_to_gt_overlaps.shape, proposal_to_gt_overlaps.mean())
@@ -1069,7 +1070,6 @@ class LibraBBoxAssigner(object):
                 overlaps_argmax = proposal_to_gt_overlaps.argmax(axis=1)
                 print('overlaps_argmax,', overlaps_argmax.shape, overlaps_argmax, overlaps_argmax.mean())
                 overlaps_max = proposal_to_gt_overlaps.max(axis=1)
-                print('overlaps_max,', overlaps_max.shape, overlaps_max, overlaps_max.mean())
                 # Boxes which with non-zero overlap with gt boxes
                 overlapped_boxes_ind = np.where(overlaps_max > 0)[0]
 
@@ -1106,6 +1106,8 @@ class LibraBBoxAssigner(object):
                 fg_inds = np.where(max_overlaps >= fg_thresh)[0]
                 fg_rois_per_this_image = np.minimum(fg_rois_per_im,
                                                     fg_inds.shape[0])
+                print('min', min(max_overlaps[np.where(max_overlaps >= fg_thresh)]))
+                print('max', max(max_overlaps[np.where(max_overlaps < fg_thresh)]))
                 # Sample foreground if there are too many
                 if fg_inds.shape[0] > fg_rois_per_this_image:
                     if use_random:

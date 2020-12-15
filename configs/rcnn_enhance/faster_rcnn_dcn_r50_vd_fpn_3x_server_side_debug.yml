@@ -101,10 +101,10 @@ LearningRate:
   schedulers:
   - !PiecewiseDecay
     gamma: 0.1
-    milestones: [180000, 240000]
+    milestones: [8, 11]
   - !LinearWarmup
     start_factor: 0.1
-    steps: 1000
+    steps: 500
 
 OptimizerBuilder:
   optimizer:

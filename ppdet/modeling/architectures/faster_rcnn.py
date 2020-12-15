@@ -105,6 +105,11 @@ class FasterRCNN(object):
             # sampled rpn proposals
             for var in ['gt_class', 'is_crowd', 'gt_bbox', 'im_info']:
                 assert var in feed_vars, "{} has no {}".format(feed_vars, var)
+            # rois-->collect.tmp_0
+            # gt_class-->gt_class
+            # is_crowd-->is_crowd
+            # gt_bbox-->gt_bbox
+            # im_info-->im_info
             outs = self.bbox_assigner(
                 rpn_rois=rois,
                 gt_classes=feed_vars['gt_class'],
@@ -113,10 +118,14 @@ class FasterRCNN(object):
                 im_info=feed_vars['im_info'])
 
             rois = outs[0]
+            # return_rois-->_generated_var_0
+            print('return--rois', rois)
             labels_int32 = outs[1]
             bbox_targets = outs[2]
             bbox_inside_weights = outs[3]
             bbox_outside_weights = outs[4]
+            #_generated_var_0  _generated_var_3  _generated_var_1  _generated_var_2
+            print('1214---11-rois', rois, bbox_targets, bbox_inside_weights, bbox_outside_weights)
         else:
             if self.rpn_only:
                 im_scale = fluid.layers.slice(

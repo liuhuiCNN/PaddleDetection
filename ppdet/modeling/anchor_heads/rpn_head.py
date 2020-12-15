@@ -170,12 +170,14 @@ class RPNHead(object):
             rpn_cls_prob = fluid.layers.transpose(
                 rpn_cls_prob, perm=[0, 3, 1, 2])
         prop_op = self.train_proposal if mode == 'train' else self.test_proposal
+        print('debug1215 rpn_cls_prob', rpn_cls_prob, rpn_bbox_pred, )
         rpn_rois, rpn_roi_probs = prop_op(
             scores=rpn_cls_prob,
             bbox_deltas=rpn_bbox_pred,
             im_info=im_info,
             anchors=self.anchor,
             variances=self.anchor_var)
+        print('debug1215 rpn_rois', rpn_rois)
         return rpn_rois
 
     def _transform_input(self, rpn_cls_score, rpn_bbox_pred, anchor,
@@ -216,7 +218,12 @@ class RPNHead(object):
 
         """
         rpn_cls, rpn_bbox, anchor, anchor_var = self._get_loss_input()
-        input('xxx123')
+        # rpn_cls  concat_0.tmp_0
+        # rpn_bbox  concat_1.tmp_0
+        # anchor  concat_2.tmp_0
+        # anchor_var  concat_3.tmp_0
+        print('\n\nrpn_cls', rpn_cls, 'rpn_bbox', rpn_bbox, 'anchor', anchor, 'anchor_var',anchor_var)
+        #input('xxx123 ddddddds')
         
         if self.num_classes == 1:
             score_pred, loc_pred, score_tgt, loc_tgt, bbox_weight = \
@@ -232,7 +239,9 @@ class RPNHead(object):
             score_tgt.stop_gradient = True
             rpn_cls_loss = fluid.layers.sigmoid_cross_entropy_with_logits(
                 x=score_pred, label=score_tgt)
-            print('ddd debug score_tgt score_pred', score_tgt, score_pred)
+            # score_tgt  cast_0.tmp_0
+            # score_pred  gather_0.tmp_0
+            #print('ddd debug score_tgt score_pred', score_tgt, score_pred)
             # rpn_bbox  concat_1.tmp_0
             # rpn_cls  concat_0.tmp_0
             # anchor  concat_2.tmp_0
@@ -240,17 +249,13 @@ class RPNHead(object):
             # gt_bbox  gt_bbox
             # is_crowd   is_crowd
             # im_info  im_info
-            print('rpn_bbox',rpn_bbox,rpn_cls,anchor,anchor_var,gt_box,is_crowd,im_info)
+            #print('rpn_bbox',rpn_bbox,rpn_cls,anchor,anchor_var,gt_box,is_crowd,im_info)
             #score_pred  mean_0.tmp_0
             #loc_pred  mean_1.tmp_0
             #score_tgt  mean_2.tmp_0
             #loc_tgt  mean_3.tmp_
             #bbox_weight  mean_4.tmp_0
-            print('score_pred', score_pred.shape, score_pred.mean(),
-                  'loc_pred', loc_pred.shape, loc_pred.mean(),
-                  'score_tgt', score_tgt.shape, score_tgt.mean(),
-                  'loc_tgt', loc_tgt.shape, loc_tgt.mean(),
-                  'bbox_weight', bbox_weight.shape, bbox_weight.mean(),)
+  
         else:
             score_pred, loc_pred, score_tgt, loc_tgt, bbox_weight = \
                 self.rpn_target_assign(
@@ -264,12 +269,16 @@ class RPNHead(object):
                     num_classes=self.num_classes,
                     im_info=im_info)
 
-            
-            
             labels_int64 = fluid.layers.cast(x=score_tgt, dtype='int64')
             labels_int64.stop_gradient = True
             rpn_cls_loss = fluid.layers.softmax_with_cross_entropy(
                 logits=score_pred, label=labels_int64, numeric_stable_mode=True)
+
+        print('1222112322322222222score_pred', score_pred.shape, score_pred.mean(),
+              'loc_pred', loc_pred.shape, loc_pred.mean(),
+              'score_tgt', score_tgt.shape, score_tgt.mean(),
+              'loc_tgt', loc_tgt.shape, loc_tgt.mean(),
+              'bbox_weight', bbox_weight.shape, bbox_weight.mean(), )
 
         rpn_cls_loss = fluid.layers.reduce_mean(
             rpn_cls_loss, name='loss_rpn_cls')
@@ -387,6 +396,7 @@ class FPNRPNHead(RPNHead):
         print('anchor_ddd', self.anchors, self.anchor_var)
         cls_num_filters = num_anchors * self.num_classes
         print('dddddddd cls_num_filters,', cls_num_filters, num_anchors, self.num_classes)
+        #input('xddx')
         self.rpn_cls_score = fluid.layers.conv2d(
             input=conv_rpn_fpn,
             num_filters=cls_num_filters,
@@ -416,6 +426,7 @@ class FPNRPNHead(RPNHead):
                 name=bbox_share_name + '_b',
                 learning_rate=2.,
                 regularizer=L2Decay(0.)))
+        print('self.rpn_bbox_pred', self.rpn_bbox_pred)
         return self.rpn_cls_score, self.rpn_bbox_pred
 
     def _get_single_proposals(self, body_feat, im_info, feat_lvl, mode='train'):
@@ -485,7 +496,6 @@ class FPNRPNHead(RPNHead):
         roi_probs_list = []
         fpn_feat_names = list(fpn_feats.keys())
         for lvl in range(self.min_level, self.max_level + 1):
-            print('get_proposals 2020_1213, lvl={}'.format(lvl))
             fpn_feat_name = fpn_feat_names[self.max_level - lvl]
             fpn_feat = fpn_feats[fpn_feat_name]
             rois_fpn, roi_probs_fpn = self._get_single_proposals(
@@ -495,7 +505,7 @@ class FPNRPNHead(RPNHead):
             roi_probs_list.append(roi_probs_fpn)
             self.anchors_list.append(self.anchors)
             self.anchor_var_list.append(self.anchor_var)
-            print('rois_fpn:', rois_fpn, 'roi_probs_fpn', roi_probs_fpn, 'self.anchors', self.anchors)
+        print('rois_list', len(rois_list), rois_list[0], rois_list[1], rois_list[2], rois_list[3], rois_list[4])
         prop_op = self.train_proposal if mode == 'train' else self.test_proposal
         post_nms_top_n = prop_op.post_nms_top_n
         rois_collect = fluid.layers.collect_fpn_proposals(
@@ -505,6 +515,7 @@ class FPNRPNHead(RPNHead):
             self.max_level,
             post_nms_top_n,
             name='collect')
+        print('after rois_list rois_collect:', rois_collect)
         return rois_collect
 
     def _get_loss_input(self):
