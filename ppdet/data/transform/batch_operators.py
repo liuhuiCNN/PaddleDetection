@@ -94,7 +94,7 @@ class PadBatch(BaseOperator):
                 gt_segm = data['gt_segm']
                 padding_segm = np.zeros(
                     (gt_segm.shape[0], max_shape[1], max_shape[2]),
-                    dtype=np.uint8)
+                    dtype=np.uint16)
                 padding_segm[:, :im_h, :im_w] = gt_segm
                 data['gt_segm'] = padding_segm
 
@@ -637,7 +637,7 @@ class Gt2Solov2Target(BaseOperator):
             gt_bboxes_raw = sample['gt_bbox']
             gt_labels_raw = sample['gt_class']
             im_c, im_h, im_w = sample['image'].shape[:]
-            gt_masks_raw = sample['gt_segm'].astype(np.uint8)
+            gt_masks_raw = sample['gt_segm'].astype(np.uint16)
             mask_feat_size = [
                 int(im_h / self.sampling_ratio), int(im_w / self.sampling_ratio)
             ]
@@ -660,7 +660,7 @@ class Gt2Solov2Target(BaseOperator):
                 if num_ins == 0:
                     ins_label = np.zeros(
                         [1, mask_feat_size[0], mask_feat_size[1]],
-                        dtype=np.uint8)
+                        dtype=np.uint16)
                     ins_ind_label_list.append(ins_ind_label)
                     sample['cate_label{}'.format(idx)] = cate_label.flatten()
                     sample['ins_label{}'.format(idx)] = ins_label
@@ -718,7 +718,7 @@ class Gt2Solov2Target(BaseOperator):
                             label = int(i * num_grid + j)
                             cur_ins_label = np.zeros(
                                 [mask_feat_size[0], mask_feat_size[1]],
-                                dtype=np.uint8)
+                                dtype=np.uint16)
                             cur_ins_label[:seg_mask.shape[0], :seg_mask.shape[
                                 1]] = seg_mask
                             ins_label.append(cur_ins_label)
@@ -728,7 +728,7 @@ class Gt2Solov2Target(BaseOperator):
                 if ins_label == []:
                     ins_label = np.zeros(
                         [1, mask_feat_size[0], mask_feat_size[1]],
-                        dtype=np.uint8)
+                        dtype=np.uint16)
                     ins_ind_label_list.append(ins_ind_label)
                     sample['cate_label{}'.format(idx)] = cate_label.flatten()
                     sample['ins_label{}'.format(idx)] = ins_label

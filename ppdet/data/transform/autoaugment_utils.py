@@ -189,12 +189,12 @@ def blend(image1, image2, factor):
     # Interpolate
     if factor > 0.0 and factor < 1.0:
         # Interpolation means we always stay within 0 and 255.
-        return temp.astype(np.uint8)
+        return temp.astype(np.uint16)
 
     # Extrapolate:
     #
     # We need to clip and then cast.
-    return np.clip(temp, a_min=0, a_max=255).astype(np.uint8)
+    return np.clip(temp, a_min=0, a_max=255*255).astype(np.uint16)
 
 
 def cutout(image, pad_size, replace=0):
@@ -246,14 +246,14 @@ def cutout(image, pad_size, replace=0):
         np.ones_like(
             image, dtype=image.dtype) * replace,
         image)
-    return image.astype(np.uint8)
+    return image.astype(np.uint16)
 
 
 def solarize(image, threshold=128):
     # For each pixel in the image, select the pixel
     # if the value is less than the threshold.
     # Otherwise, subtract 255 from the pixel.
-    return np.where(image < threshold, image, 255 - image)
+    return np.where(image < threshold, image, 255*255 - image)
 
 
 def solarize_add(image, addition=0, threshold=128):
@@ -262,7 +262,7 @@ def solarize_add(image, addition=0, threshold=128):
     # pixel value to be between 0 and 255. The value
     # of 'addition' is between -128 and 128.
     added_image = image.astype(np.int64) + addition
-    added_image = np.clip(added_image, a_min=0, a_max=255).astype(np.uint8)
+    added_image = np.clip(added_image, a_min=0, a_max=255*255).astype(np.uint16)
     return np.where(image < threshold, added_image, image)
 
 
@@ -308,7 +308,7 @@ def rotate(image, degrees, replace):
     image = wrap(image)
     image = Image.fromarray(image)
     image = image.rotate(degrees)
-    image = np.array(image, dtype=np.uint8)
+    image = np.array(image, dtype=np.uint16)
     return unwrap(image, replace)
 
 
@@ -429,7 +429,7 @@ def random_shift_bbox(image,
     image = mask_and_add_image(new_min_y, new_min_x, new_max_y, new_max_x, mask,
                                bbox_content, image)
 
-    return image.astype(np.uint8), new_bbox
+    return image.astype(np.uint16), new_bbox
 
 
 def _clip_bbox(min_y, min_x, max_y, max_x):
@@ -554,7 +554,7 @@ def _apply_bbox_augmentation(image, bbox, augmentation_func, *args):
                          constant_values=1)
     # Replace the old bbox content with the new augmented content.
     image = image * mask_tensor + augmented_bbox_content
-    return image.astype(np.uint8)
+    return image.astype(np.uint16)
 
 
 def _concat_bbox(bbox, bboxes):
@@ -614,7 +614,7 @@ def _apply_bbox_augmentation_wrapper(image, bbox, new_bboxes, prob,
         else:
             augmented_image = image
     new_bboxes = _concat_bbox(bbox, new_bboxes)
-    return augmented_image.astype(np.uint8), new_bboxes
+    return augmented_image.astype(np.uint16), new_bboxes
 
 
 def _apply_multi_bbox_augmentation(image, bboxes, prob, aug_func,
@@ -934,7 +934,7 @@ def translate_bbox(image, bboxes, pixels, replace, shift_horizontal):
     num_bboxes = len(bboxes)
     for idx in range(num_bboxes):
         new_bboxes[idx] = wrapped_shift_bbox(bboxes[idx])
-    return image.astype(np.uint8), new_bboxes
+    return image.astype(np.uint16), new_bboxes
 
 
 def shear_x(image, level, replace):
@@ -1039,7 +1039,7 @@ def shear_with_bboxes(image, bboxes, level, replace, shear_horizontal):
     num_bboxes = len(bboxes)
     for idx in range(num_bboxes):
         new_bboxes[idx] = wrapped_shear_bbox(bboxes[idx])
-    return image.astype(np.uint8), new_bboxes
+    return image.astype(np.uint16), new_bboxes
 
 
 def autocontrast(image):
@@ -1063,11 +1063,11 @@ def autocontrast(image):
 
         # Scale the image, making the lowest value 0 and the highest value 255.
         def scale_values(im):
-            scale = 255.0 / (hi - lo)
+            scale = 255.0*255.0 / (hi - lo)
             offset = -lo * scale
             im = im.astype(np.float32) * scale + offset
-            img = np.clip(im, a_min=0, a_max=255.0)
-            return im.astype(np.uint8)
+            img = np.clip(im, a_min=0, a_max=255.0*255.0)
+            return im.astype(np.uint16)
 
         result = scale_values(image) if hi > lo else image
         return result
@@ -1088,7 +1088,7 @@ def sharpness(image, factor):
     # Make image 4D for conv operation.
     # SMOOTH PIL Kernel.
     kernel = np.array([[1, 1, 1], [1, 5, 1], [1, 1, 1]], dtype=np.float32) / 13.
-    result = cv2.filter2D(image, -1, kernel).astype(np.uint8)
+    result = cv2.filter2D(image, -1, kernel).astype(np.uint16)
 
     # Blend the final result.
     return blend(result, orig_image, factor)
@@ -1101,7 +1101,7 @@ def equalize(image):
         """Scale the data in the channel to implement equalize."""
         im = im[:, :, c].astype(np.int32)
         # Compute the histogram of the image channel.
-        histo, _ = np.histogram(im, range=[0, 255], bins=256)
+        histo, _ = np.histogram(im, range=[0, 255*255], bins=256)
 
         # For the purposes of computing the step, filter out the nonzeros.
         nonzero = np.where(np.not_equal(histo, 0))
@@ -1116,7 +1116,7 @@ def equalize(image):
             lut = np.concatenate([[0], lut[:-1]], 0)
             # Clip the counts to be in range.    This is done
             # in the C code for image.point.
-            return np.clip(lut, a_min=0, a_max=255).astype(np.uint8)
+            return np.clip(lut, a_min=0, a_max=255*255).astype(np.uint16)
 
         # If step is zero, return the original image.    Otherwise, build
         # lut from the full histogram and step and then index from it.
@@ -1125,7 +1125,7 @@ def equalize(image):
         else:
             result = np.take(build_lut(histo, step), im)
 
-        return result.astype(np.uint8)
+        return result.astype(np.uint16)
 
     # Assumes RGB for now.    Scales each channel independently
     # and then stacks the result.
@@ -1139,7 +1139,7 @@ def equalize(image):
 def wrap(image):
     """Returns 'image' with an extra channel set to all 1s."""
     shape = image.shape
-    extended_channel = 255 * np.ones([shape[0], shape[1], 1], image.dtype)
+    extended_channel = 255*255 * np.ones([shape[0], shape[1], 1], image.dtype)
     extended = np.concatenate([image, extended_channel], 2).astype(image.dtype)
     return extended
 
@@ -1183,7 +1183,7 @@ def unwrap(image, replace):
 
     image = np.reshape(flattened_image, image_shape)
     image = image[:, :, :3]
-    return image.astype(np.uint8)
+    return image.astype(np.uint16)
 
 
 def _cutout_inside_bbox(image, bbox, pad_fraction):

@@ -1,0 +1,1 @@
+./images/color_blob_3_112021193800.tif ./annotations/color_blob_3_112021193800.xml

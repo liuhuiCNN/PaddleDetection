@@ -140,12 +140,12 @@ def draw_mask(im, np_boxes, np_masks, labels, resolution=14, threshold=0.5):
         h = np.maximum(h, 1)
         padded_mask[1:-1, 1:-1] = np_masks[idx, int(clsid), :, :]
         resized_mask = cv2.resize(padded_mask, (w, h))
-        resized_mask = np.array(resized_mask > threshold, dtype=np.uint8)
+        resized_mask = np.array(resized_mask > threshold, dtype=np.uint16)
         x0 = min(max(xmin, 0), im_w)
         x1 = min(max(xmax + 1, 0), im_w)
         y0 = min(max(ymin, 0), im_h)
         y1 = min(max(ymax + 1, 0), im_h)
-        im_mask = np.zeros((im_h, im_w), dtype=np.uint8)
+        im_mask = np.zeros((im_h, im_w), dtype=np.uint16)
         im_mask[y0:y1, x0:x1] = resized_mask[(y0 - ymin):(y1 - ymin), (
             x0 - xmin):(x1 - xmin)]
         if clsid not in clsid2color:
@@ -157,7 +157,7 @@ def draw_mask(im, np_boxes, np_masks, labels, resolution=14, threshold=0.5):
         color_mask = np.array(color_mask)
         im[idx[0], idx[1], :] *= 1.0 - alpha
         im[idx[0], idx[1], :] += alpha * color_mask
-    return Image.fromarray(im.astype('uint8'))
+    return Image.fromarray(im.astype('uint16'))
 
 
 def draw_box(im, np_boxes, labels):
@@ -215,7 +215,7 @@ def draw_segm(im,
     color_list = get_color_map_list(len(labels))
     im = np.array(im).astype('float32')
     clsid2color = {}
-    np_segms = np_segms.astype(np.uint8)
+    np_segms = np_segms.astype(np.uint16)
     for i in range(np_segms.shape[0]):
         mask, score, clsid = np_segms[i], np_score[i], np_label[i] + 1
         if score < threshold:
@@ -248,7 +248,7 @@ def draw_segm(im,
             0.3, (0, 0, 0),
             1,
             lineType=cv2.LINE_AA)
-    return Image.fromarray(im.astype('uint8'))
+    return Image.fromarray(im.astype('uint16'))
 
 
 def lmk2out(bboxes, np_lmk, im_info, threshold=0.5, is_bbox_normalized=True):

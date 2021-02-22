@@ -115,12 +115,15 @@ class DecodeImage(BaseOperator):
                 sample['image'] = f.read()
 
         im = sample['image']
-        data = np.frombuffer(im, dtype='uint8')
-        im = cv2.imdecode(data, 1)  # BGR mode, but need RGB mode
+        data = np.frombuffer(im, dtype='uint16')
+
+        im = cv2.imdecode(data, cv2.IMREAD_UNCHANGED | cv2.IMREAD_ANYDEPTH)  # BGR mode, but need RGB mode
 
         if self.to_rgb:
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
         sample['image'] = im
+        # print info of im
+        print('after decodeimage', im.dtype, im.shape, im.mean(), im.max(), im.min())
 
         if 'h' not in sample:
             sample['h'] = im.shape[0]
@@ -357,7 +360,7 @@ class ResizeImage(BaseOperator):
                 raise TypeError(
                     'If you set max_size to cap the maximum size of image,'
                     'please set use_cv2 to True to resize the image.')
-            im = im.astype('uint8')
+            im = im.astype('uint16')
             im = Image.fromarray(im)
             im = im.resize((int(resize_w), int(resize_h)), self.interp)
             im = np.array(im)
@@ -392,7 +395,7 @@ class ResizeImage(BaseOperator):
                     interpolation=cv2.INTER_NEAREST)
                 for gt_segm in sample['gt_segm']
             ]
-            sample['gt_segm'] = np.asarray(masks).astype(np.uint8)
+            sample['gt_segm'] = np.asarray(masks).astype(np.uint16)
 
         return sample
 
@@ -426,7 +429,7 @@ class RandomFlipImage(BaseOperator):
                 rle = mask_util.frPyObjects(rle, height, width)
             mask = mask_util.decode(rle)
             mask = mask[:, ::-1]
-            rle = mask_util.encode(np.array(mask, order='F', dtype=np.uint8))
+            rle = mask_util.encode(np.array(mask, order='F', dtype=np.uint16))
             return rle
 
         flipped_segms = []
@@ -738,6 +741,8 @@ class NormalizeImage(BaseOperator):
                 # hard code
                 if k.startswith('image'):
                     im = sample[k]
+                    # print info of im
+                    print('before NormalizeImage im dtype is:', im.dtype, im.shape, im.mean(), im.max(), im.min())
                     im = im.astype(np.float32, copy=False)
                     if self.is_channel_first:
                         mean = np.array(self.mean)[:, np.newaxis, np.newaxis]
@@ -746,7 +751,7 @@ class NormalizeImage(BaseOperator):
                         mean = np.array(self.mean)[np.newaxis, np.newaxis, :]
                         std = np.array(self.std)[np.newaxis, np.newaxis, :]
                     if self.is_scale:
-                        im = im / 255.0
+                        im = im / (255.0*255.0)
                     im -= mean
                     im /= std
                     sample[k] = im
@@ -912,7 +917,7 @@ class ExpandImage(BaseOperator):
                     (width - w_off) / im_width, (height - h_off) / im_height
                 ]
                 expand_im = np.ones((height, width, 3))
-                expand_im = np.uint8(expand_im * np.squeeze(self.mean))
+                expand_im = np.uint16(expand_im * np.squeeze(self.mean))
                 expand_im = Image.fromarray(expand_im)
                 im = Image.fromarray(im)
                 expand_im.paste(im, (int(w_off), int(h_off)))
@@ -1244,6 +1249,7 @@ class Permute(BaseOperator):
                 # hard code
                 if k.startswith('image'):
                     im = sample[k]
+                    print('in Permute func im info', im.dtype, im.shape, im.mean(), im.max(), im.min())
                     if self.channel_first:
                         im = np.swapaxes(im, 1, 2)
                         im = np.swapaxes(im, 1, 0)
@@ -1279,7 +1285,7 @@ class MixupImage(BaseOperator):
             img1.astype('float32') * factor
         img[:img2.shape[0], :img2.shape[1], :] += \
             img2.astype('float32') * (1.0 - factor)
-        return img.astype('uint8')
+        return img.astype('uint16')
 
     def __call__(self, sample, context=None):
         if 'mixup' not in sample:
@@ -1656,7 +1662,7 @@ class CornerRandColor(ColorDistort):
         img = sample['image']
         if self.is_scale:
             img = img.astype(np.float32, copy=False)
-            img /= 255.
+            img /= (255.0 * 255.0)
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         functions = [
             self.apply_brightness,
@@ -1743,7 +1749,7 @@ class RandomExpand(BaseOperator):
             expanded_mask[y:y + height, x:x + width] = mask
             rle = mask_util.encode(
                 np.array(
-                    expanded_mask, order='F', dtype=np.uint8))
+                    expanded_mask, order='F', dtype=np.uint16))
             return rle
 
         expanded_segms = []
@@ -1774,9 +1780,9 @@ class RandomExpand(BaseOperator):
             return sample
         y = np.random.randint(0, h - height)
         x = np.random.randint(0, w - width)
-        canvas = np.ones((h, w, 3), dtype=np.uint8)
-        canvas *= np.array(self.fill_value, dtype=np.uint8)
-        canvas[y:y + height, x:x + width, :] = img.astype(np.uint8)
+        canvas = np.ones((h, w, 3), dtype=np.uint16)
+        canvas *= np.array(self.fill_value, dtype=np.uint16)
+        canvas[y:y + height, x:x + width, :] = img.astype(np.uint16)
 
         sample['h'] = h
         sample['w'] = w
@@ -1872,7 +1878,7 @@ class RandomCrop(BaseOperator):
                 rle = mask_util.frPyObjects(rle, height, width)
             mask = mask_util.decode(rle)
             mask = mask[crop[1]:crop[3], crop[0]:crop[2]]
-            rle = mask_util.encode(np.array(mask, order='F', dtype=np.uint8))
+            rle = mask_util.encode(np.array(mask, order='F', dtype=np.uint16))
             return rle
 
         crop_segms = []
@@ -2163,7 +2169,7 @@ class CornerTarget(BaseOperator):
         br_regrs = np.zeros((self.max_tag_len, 2), dtype=np.float32)
         tl_tags = np.zeros((self.max_tag_len), dtype=np.int64)
         br_tags = np.zeros((self.max_tag_len), dtype=np.int64)
-        tag_masks = np.zeros((self.max_tag_len), dtype=np.uint8)
+        tag_masks = np.zeros((self.max_tag_len), dtype=np.uint16)
         tag_lens = np.zeros((), dtype=np.int32)
         tag_nums = np.zeros((1), dtype=np.int32)
 
@@ -2564,7 +2570,7 @@ class DebugVisibleImage(BaseOperator):
 
         if not isinstance(sample['image'], np.ndarray):
             raise TypeError("{}: sample[image] type is not numpy.".format(self))
-        image = Image.fromarray(np.uint8(sample['image']))
+        image = Image.fromarray(np.uint16(sample['image']))
 
         width = sample['w']
         height = sample['h']
@@ -2589,11 +2595,11 @@ class DebugVisibleImage(BaseOperator):
                 mask_color_id += 1
                 for c in range(3):
                     color_mask[c] = color_mask[c] * (1 - w_ratio
-                                                     ) + w_ratio * 255
+                                                     ) + w_ratio * 255*255
                 idx = np.nonzero(mask)
                 image_np[idx[0], idx[1], :] *= 1.0 - alpha
                 image_np[idx[0], idx[1], :] += alpha * color_mask
-            image = Image.fromarray(np.uint8(image_np))
+            image = Image.fromarray(np.uint16(image_np))
 
         draw = ImageDraw.Draw(image)
         for i in range(gt_bbox.shape[0]):
@@ -2614,7 +2620,7 @@ class DebugVisibleImage(BaseOperator):
             tw, th = draw.textsize(text)
             draw.rectangle(
                 [(xmin + 1, ymin - th), (xmin + tw + 1, ymin)], fill='green')
-            draw.text((xmin + 1, ymin - th), text, fill=(255, 255, 255))
+            draw.text((xmin + 1, ymin - th), text, fill=(255*255, 255*255, 255*255))
 
         if 'gt_keypoint' in sample.keys():
             gt_keypoint = sample['gt_keypoint']
@@ -2675,5 +2681,5 @@ class Poly2Mask(BaseOperator):
             self._poly2mask(gt_poly, im_h, im_w)
             for gt_poly in sample['gt_poly']
         ]
-        sample['gt_segm'] = np.asarray(masks).astype(np.uint8)
+        sample['gt_segm'] = np.asarray(masks).astype(np.uint16)
         return sample

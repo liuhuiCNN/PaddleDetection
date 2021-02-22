@@ -37,7 +37,7 @@ def decode_image(im_file, im_info):
     if isinstance(im_file, str):
         with open(im_file, 'rb') as f:
             im_read = f.read()
-        data = np.frombuffer(im_read, dtype='uint8')
+        data = np.frombuffer(im_read, dtype='uint16')
         im = cv2.imdecode(data, 1)  # BGR mode, but need RGB mode
         im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
         im_info['origin_shape'] = im.shape[:2]
@@ -104,7 +104,7 @@ class Resize(object):
                 raise TypeError(
                     'If you set max_size to cap the maximum size of image,'
                     'please set use_cv2 to True to resize the image.')
-            im = im.astype('uint8')
+            im = im.astype('uint16')
             im = Image.fromarray(im)
             im = im.resize((int(resize_w), int(resize_h)), self.interp)
             im = np.array(im)
