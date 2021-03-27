@@ -405,6 +405,7 @@ class S2ANetHead(nn.Layer):
         self.featmap_sizes = dict()
         self.base_anchors = dict()
         self.refine_anchor_list = []
+        self.init_anchor_list = []
 
         for i, feat in enumerate(feats):
             fam_cls_feat = self.fam_cls_convs(feat)
@@ -430,6 +431,7 @@ class S2ANetHead(nn.Layer):
                 featmap_size, self.anchor_strides[i])
 
             init_anchors = bbox_util.rect2rbox(init_anchors)
+            self.init_anchor_list.append(init_anchors)
             self.base_anchors[(i, featmap_size[0])] = init_anchors
 
             refine_anchor = bbox_util.bbox_decode(
@@ -477,9 +479,26 @@ class S2ANetHead(nn.Layer):
 
     def get_prediction(self, s2anet_head_out, nms_pre):
         refine_anchors = self.refine_anchor_list
+        init_anchors = []
+        #for e in refine_anchors:
+        #    print('e refine_anchors', e.shape, e)
+        '''
+        featmap_sizes = [self.featmap_sizes[e] for e in self.featmap_sizes]
+        for ii in range(len(self.init_anchor_list)):
+            e = self.init_anchor_list[ii]
+            print('e init_anchors', e.shape, e)
+            feat_size = featmap_sizes[ii]
+            print('feat_size', feat_size)
+            init_anchors.append(paddle.to_tensor(e).reshape([1, feat_size[0], feat_size[1], 5]))
+        '''
         fam_cls_branch_list, fam_reg_branch_list, odm_cls_branch_list, odm_reg_branch_list = s2anet_head_out
         pred_scores, pred_bboxes = self.get_bboxes(odm_cls_branch_list, odm_reg_branch_list, refine_anchors,
                                            nms_pre, cls_out_channels=self.cls_out_channels, use_sigmoid_cls=self.use_sigmoid_cls)
+        maxpos = np.argmax(pred_scores)
+        print('maxpos', maxpos)
+        input('xx1')
+        print(pred_scores[0, int(maxpos/5), maxpos%5])
+        input('xx1')
         return pred_scores, pred_bboxes
 
     def get_fam_loss(self, fam_target, s2anet_head_out):
