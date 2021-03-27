@@ -674,27 +674,31 @@ class S2ANetHead(nn.Layer):
         inside_flags = np.array(inside_flags, np.int32)
 
         # s2anet_anchor_assigner
-        # anchor_list   gt_boxes,
+        # anchor_list   gt_boxes
+        """
         fam_target = s2anet_anchor_assigner(anchors_list_all, gt_bboxes, gt_labels, is_crowd, np_scale_factor)
 
         if fam_target is None:
             return None
 
         fam_loss = self.get_fam_loss(fam_target, s2anet_head_out)
+        """
 
         # Oriented Detection Module targets
-        refine_anchors_list, valid_flag_list = self.get_refine_anchors(featmap_sizes, image_shape=np_im_shape)
-        refine_anchors_list = np.array(refine_anchors_list)
-        odm_target = s2anet_anchor_assigner(refine_anchors_list, gt_bboxes, gt_labels, is_crowd, np_scale_factor)
+        #refine_anchors_list, valid_flag_list = self.get_refine_anchors(featmap_sizes, image_shape=np_im_shape)
+        #refine_anchors_list = np.array(refine_anchors_list)
 
+        odm_target = s2anet_anchor_assigner(anchors_list_all, gt_bboxes, gt_labels, is_crowd, np_scale_factor)
+
+        zero_loss = {'fam_cls_loss': 0.0, 'fam_reg_loss': 0.0, 'odm_cls_loss': 1e-6, 'odm_reg_loss': 1e-6}
         if odm_target is None:
-            return None
+            return zero_loss
 
         odm_loss = self.get_odm_loss(odm_target, s2anet_head_out)
-        fam_loss_total = fam_loss['fam_cls_loss'] + fam_loss['fam_reg_loss']
+        #fam_loss_total = fam_loss['fam_cls_loss'] + fam_loss['fam_reg_loss']
         odm_loss_total = odm_loss['odm_cls_loss'] + odm_loss['odm_reg_loss']
-        return {'fam_cls_loss': fam_loss['fam_cls_loss'],
-                'fam_reg_loss': fam_loss['fam_reg_loss'],
+        return {'fam_cls_loss': 0.0,
+                'fam_reg_loss': 0.0,
                 'odm_cls_loss': odm_loss['odm_cls_loss'],
                 'odm_reg_loss': odm_loss['odm_reg_loss']}
 
