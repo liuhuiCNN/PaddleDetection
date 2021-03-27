@@ -15,7 +15,20 @@ limitations under the License. */
 
 #include <vector>
 
-std::vector<paddle::Tensor> RboxIouForward(const paddle::Tensor& rbox1, const paddle::Tensor& rbox2);
+std::vector<paddle::Tensor> RboxIouCPUForward(const paddle::Tensor& rbox1, const paddle::Tensor& rbox2);
+std::vector<paddle::Tensor> RboxIouCUDAForward(const paddle::Tensor& rbox1, const paddle::Tensor& rbox2);
+
+
+#define CHECK_INPUT_SAME(x1, x2) PD_CHECK(x1.place() == x2.place(), "input must be smae pacle.")
+std::vector<paddle::Tensor> RboxIouForward(const paddle::Tensor& rbox1, const paddle::Tensor& rbox2) {
+    CHECK_INPUT_SAME(rbox1, rbox2);
+    if (rbox1.place() == paddle::PlaceType::kCPU) {
+        return RboxIouCPUForward(rbox1, rbox2);
+    }
+    else if (rbox1.place() == paddle::PlaceType::kGPU) {
+        return RboxIouCUDAForward(rbox1, rbox2);
+    }
+}
 
 std::vector<std::vector<int64_t>> InferShape(std::vector<int64_t> rbox1_shape, std::vector<int64_t> rbox2_shape) {
     return {{rbox1_shape[0], rbox2_shape[0]}};
