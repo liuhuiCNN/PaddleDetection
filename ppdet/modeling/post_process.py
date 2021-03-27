@@ -251,9 +251,9 @@ class S2ANetBBoxPostProcess(object):
         # pred_scores [NA, 16] --> [16, NA]
         pred_scores = paddle.transpose(pred_scores, [1, 0])
         pred_scores = paddle.reshape(pred_scores, [1, pred_scores.shape[0], pred_scores.shape[1]])
-        #print('pred_ploys, ', pred_ploys.shape, 'pred_scores', pred_scores.shape)
+        print('pred_ploys, ', pred_ploys.shape, 'pred_scores', pred_scores.shape)
         bbox_pred, bbox_num, index = self.nms(pred_ploys, pred_scores)
-        #print('after nms', bbox_pred.shape, bbox_pred[:, 1].min(), 'bbox_num', bbox_num)
+        print('after nms', bbox_pred.shape, bbox_pred[:, 1].min(), 'bbox_num', bbox_num)
         return bbox_pred, bbox_num, index
 
     def get_pred(self, bboxes, bbox_num, im_shape, scale_factor):

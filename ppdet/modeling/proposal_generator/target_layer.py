@@ -128,8 +128,7 @@ class S2ANetAnchorAssigner(object):
     def __init__(self, pos_iou_thr=0.5,
                  neg_iou_thr=0.4,
                  min_iou_thr=0.0,
-                 ignore_iof_thr=-2,
-                 use_random=True):
+                 ignore_iof_thr=-2):
         super(S2ANetAnchorAssigner, self).__init__()
         self.pos_iou_thr = pos_iou_thr
         self.neg_iou_thr = neg_iou_thr

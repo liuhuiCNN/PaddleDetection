@@ -188,6 +188,8 @@ def load_pretrain_weight(model,
 
     #path = _strip_postfix(pretrain_weight)
     path = pretrain_weight
+    load_static_weights = True
+    print('load pth', path, 'load_static_weights', load_static_weights)
     if not (os.path.isdir(path) or os.path.isfile(path) or
             os.path.exists(path + '.pdparams')):
         raise ValueError("Model pretrain path {} does not "

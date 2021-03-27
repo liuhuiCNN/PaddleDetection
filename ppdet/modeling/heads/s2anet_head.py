@@ -40,13 +40,6 @@ import numpy as np
 import paddle
 from paddle.utils.cpp_extension import load
 
-G_USE_CUSTOM_OP = False
-g_idx = 0
-if G_USE_CUSTOM_OP:
-    custom_ops = load(
-        name="custom_jit_ops",
-        sources=["ppdet/ext_op/rbox_iou_op.cc", "ppdet/ext_op/rbox_iou_op.cu"])
-
 
 def sa2net_smooth_l1_loss(pred, label, delta=1.0/9.0):
     """
@@ -260,7 +253,7 @@ class S2ANetHead(nn.Layer):
                  stacked_convs=2,
                  feat_in=256,
                  feat_out=256,
-                 num_classes=15,
+                 num_classes=4,
                  anchor_strides=[8, 16, 32, 64, 128],
                  anchor_scales=[4],
                  anchor_ratios=[1.0],
@@ -287,7 +280,6 @@ class S2ANetHead(nn.Layer):
         self.use_custom_smooth_l1_loss = use_custom_smooth_l1_loss
 
         self.use_sigmoid_cls = use_sigmoid_cls
-        num_classes = 15
         self.cls_out_channels = num_classes if self.use_sigmoid_cls else 1
 
         # anchor
