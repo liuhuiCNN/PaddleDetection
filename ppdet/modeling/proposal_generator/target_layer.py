@@ -118,22 +118,18 @@ class MaskAssigner(object):
 
 
 @register
+@serializable
 class S2ANetAnchorAssigner(object):
-    def __init__(self, batch_size_per_im=256,
-                 pos_fraction=0.5,
-                 pos_iou_thr=0.5,
+    def __init__(self, pos_iou_thr=0.5,
                  neg_iou_thr=0.4,
                  min_iou_thr=0.0,
                  ignore_iof_thr=-2,
                  use_random=True):
         super(S2ANetAnchorAssigner, self).__init__()
-        self.batch_size_per_im = batch_size_per_im
-        self.pos_fraction = pos_fraction
         self.pos_iou_thr = pos_iou_thr
         self.neg_iou_thr = neg_iou_thr
         self.min_iou_thr = min_iou_thr
         self.ignore_iof_thr = ignore_iof_thr
-        self.use_random = use_random
 
     def anchor_valid(self, anchors):
         """
@@ -229,13 +225,10 @@ class S2ANetAnchorAssigner(object):
         assert gt_bboxes.ndim == 2
         assert gt_bboxes.shape[1] == 5
 
-        batch_size_per_im = self.batch_size_per_im
         pos_iou_thr = self.pos_iou_thr
         neg_iou_thr = self.neg_iou_thr
         min_iou_thr = self.min_iou_thr
         ignore_iof_thr = self.ignore_iof_thr
-        pos_fraction = self.pos_fraction
-        use_random = self.use_random
 
         anchor_num = anchors.shape[0]
 
