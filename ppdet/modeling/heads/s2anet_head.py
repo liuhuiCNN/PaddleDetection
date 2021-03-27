@@ -289,7 +289,6 @@ class S2ANetHead(nn.Layer):
         self.use_sigmoid_cls = use_sigmoid_cls
         num_classes = 15
         self.cls_out_channels = num_classes if self.use_sigmoid_cls else 1
-        self.sampling = False
 
         # anchor
         self.anchor_generators = []
@@ -499,7 +498,7 @@ class S2ANetHead(nn.Layer):
         fam_bbox_losses = []
         st_idx = 0
         featmap_sizes = [self.featmap_sizes[e] for e in self.featmap_sizes]
-        num_total_samples = len(pos_inds) + len(neg_inds) if self.sampling else len(pos_inds)
+        num_total_samples = len(pos_inds)
         num_total_samples = max(1, num_total_samples)
 
         for idx, feat_size in enumerate(featmap_sizes):
@@ -575,7 +574,7 @@ class S2ANetHead(nn.Layer):
         odm_bbox_losses = []
         st_idx = 0
         featmap_sizes = [self.featmap_sizes[e] for e in self.featmap_sizes]
-        num_total_samples = len(pos_inds) + len(neg_inds) if self.sampling else len(pos_inds)
+        num_total_samples = len(pos_inds)
         num_total_samples = max(1, num_total_samples)
         for idx, feat_size in enumerate(featmap_sizes):
             feat_anchor_num = feat_size[0] * feat_size[1]
@@ -597,10 +596,10 @@ class S2ANetHead(nn.Layer):
             odm_cls_score1 = odm_cls_score
 
             # gt_classes 0~14(data), feat_labels 0~14, sigmoid_focal_loss need class>=1
-            feat_labels = feat_labels.reshape(-1) + 1
-            np_one_hot_targets = np.eye(self.cls_out_channels + 1)[feat_labels]
-            np_one_hot_targets = np_one_hot_targets[:, 1:]
-            feat_labels_one_hot = paddle.to_tensor(np_one_hot_targets, dtype='float32', stop_gradient=True)
+            # 0~14 + 1
+            feat_labels = paddle.to_tensor(feat_labels + 1)
+            feat_labels_one_hot = paddle.nn.functional.one_hot(feat_labels, self.cls_out_channels + 1)
+            feat_labels_one_hot = feat_labels_one_hot[:, 1:]
             num_total_samples = paddle.to_tensor(num_total_samples, dtype='float32', stop_gradient=True)
             odm_cls = paddle.nn.functional.sigmoid_focal_loss(odm_cls_score1, feat_labels_one_hot,
                                                               normalizer=num_total_samples, reduction='none')
