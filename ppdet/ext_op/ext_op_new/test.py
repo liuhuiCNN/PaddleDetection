@@ -10,13 +10,14 @@ import paddle
 from paddle.utils.cpp_extension import load
 
 paddle.set_device('gpu:0')
-paddle.disable_static()
+#paddle.set_device('cpu')
+#paddle.disable_static()
 
 custom_ops = load(
     name="custom_jit_ops", sources=["rbox_iou_op.cc", "rbox_iou_op.cu"])
 
 # generate random data
-rbox1 = np.random.rand(13000, 5)
+rbox1 = np.random.rand(130, 5)
 rbox2 = np.random.rand(7, 5)
 
 # x1 y1 w h [0, 0.5]

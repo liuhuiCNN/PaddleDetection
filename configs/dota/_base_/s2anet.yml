@@ -50,13 +50,10 @@ S2ANetHead:
 
 
 S2ANetAnchorAssigner:
-  batch_size_per_im: 256
-  pos_fraction: 0.5
   pos_iou_thr: 0.5
   neg_iou_thr: 0.4
   min_iou_thr: 0.0
   ignore_iof_thr: -2
-  use_random: True
 
 
 S2ANetBBoxPostProcess:
