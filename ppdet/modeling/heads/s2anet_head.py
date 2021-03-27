@@ -689,15 +689,16 @@ class S2ANetHead(nn.Layer):
 
         odm_target = s2anet_anchor_assigner(anchors_list_all, gt_bboxes, gt_labels, is_crowd, np_scale_factor)
 
-        zero_loss = {'fam_cls_loss': 0.0, 'fam_reg_loss': 0.0, 'odm_cls_loss': 1e-6, 'odm_reg_loss': 1e-6}
+        pd_zero = paddle.to_tensor(1e-6)
+        zero_loss = {'fam_cls_loss': pd_zero, 'fam_reg_loss': pd_zero, 'odm_cls_loss': pd_zero, 'odm_reg_loss': pd_zero}
         if odm_target is None:
             return zero_loss
 
         odm_loss = self.get_odm_loss(odm_target, s2anet_head_out)
         #fam_loss_total = fam_loss['fam_cls_loss'] + fam_loss['fam_reg_loss']
         odm_loss_total = odm_loss['odm_cls_loss'] + odm_loss['odm_reg_loss']
-        return {'fam_cls_loss': 0.0,
-                'fam_reg_loss': 0.0,
+        return {'fam_cls_loss': pd_zero,
+                'fam_reg_loss': pd_zero,
                 'odm_cls_loss': odm_loss['odm_cls_loss'],
                 'odm_reg_loss': odm_loss['odm_reg_loss']}
 

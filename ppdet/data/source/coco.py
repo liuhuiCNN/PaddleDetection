@@ -100,6 +100,9 @@ class COCODataSet(DetDataset):
                         y2 = y1 + box_h
                     else:
                         x1, y1, box_w, box_h = inst['bbox']
+                        xc = x1 + box_w/2.0
+                        yc = y1 + box_h/2.0
+                        angle = 0.0
                         x2 = x1 + box_w
                         y2 = y1 + box_h
                     eps = 1e-5
