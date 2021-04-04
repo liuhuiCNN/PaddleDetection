@@ -25,9 +25,9 @@ FPN:
   relu_before_extra_convs: False
 
 S2ANetHead:
-  anchor_strides: [ 8, 16, 32, 64, 128 ]
-  anchor_scales: [ 4 ]
-  anchor_ratios: [ 1.0 ]
+  anchor_strides: [8, 16, 32, 64, 128]
+  anchor_scales: [4]
+  anchor_ratios: [1.0]
   anchor_assign: RBoxAssigner
   stacked_convs: 2
   feat_in: 256
@@ -48,6 +48,6 @@ S2ANetBBoxPostProcess:
   min_bbox_size: 0.0
   nms:
     name: MultiClassNMS
-    keep_top_k: -1
+    keep_top_k: 2000
     score_threshold: 0.05
     nms_threshold: 0.1
