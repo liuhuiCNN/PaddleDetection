@@ -329,7 +329,11 @@ class Trainer(object):
     def evaluate(self):
         self._eval_with_loader(self.loader)
 
-    def predict(self, images, draw_threshold=0.5, output_dir='output'):
+    def predict(self,
+                images,
+                draw_threshold=0.5,
+                output_dir='output',
+                save_txt=False):
         self.dataset.set_images(images)
         loader = create('TestReader')(self.dataset, 0)
 
@@ -365,6 +369,7 @@ class Trainer(object):
                         if 'mask' in batch_res else None
                 segm_res = batch_res['segm'][start:end] \
                         if 'segm' in batch_res else None
+
                 image = visualize_results(image, bbox_res, mask_res, segm_res,
                                           int(outs['im_id']), catid2name,
                                           draw_threshold)
@@ -376,6 +381,21 @@ class Trainer(object):
                 logger.info("Detection bbox results save in {}".format(
                     save_name))
                 image.save(save_name, quality=95)
+                if save_txt:
+                    with open(os.path.splitext(save_name)[0] + '.txt',
+                              'w') as f:
+                        for dt in bbox_res:
+                            catid, bbox, score = dt['category_id'], dt[
+                                'bbox'], dt['score']
+                            if score < draw_threshold:
+                                continue
+                            # each bbox result as a line
+                            # for rbox: classname score x1 y1 x2 y2 x3 y3 x4 y4
+                            # for bbox: classname score x1 y1 w h
+                            bbox_pred = '{} {}'.format(
+                                catid2name[catid], score) + ' '.join(
+                                    [str(e) for e in bbox])
+                            f.write(bbox_pred + '\n')
                 start = end
 
     def _get_save_image_name(self, output_dir, image_path):

@@ -31,6 +31,7 @@ TRT_MIN_SUBGRAPH = {
     'SSD': 60,
     'RCNN': 40,
     'RetinaNet': 40,
+    'S2ANet': 40,
     'EfficientDet': 40,
     'Face': 3,
     'TTFNet': 3,
@@ -56,10 +57,9 @@ def _parse_reader(reader_cfg, dataset_cfg, metric, arch, image_shape):
             preprocess_list.append(p)
     batch_transforms = reader_cfg.get('batch_transforms', None)
     if batch_transforms:
-        methods = [list(bt.keys())[0] for bt in batch_transforms]
         for bt in batch_transforms:
             for key, value in bt.items():
-                # for deploy/infer, use PadStride(stride) instead PadBatch(pad_to_stride, pad_gt)
+                # for deploy/infer, use PadStride(stride) instead PadBatch(pad_to_stride)
                 if key == 'PadBatch':
                     preprocess_list.append({
                         'type': 'PadStride',
