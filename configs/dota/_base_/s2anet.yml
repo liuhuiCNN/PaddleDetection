@@ -1,5 +1,6 @@
 architecture: S2ANet
-pretrain_weights: https://paddle-imagenet-models-name.bj.bcebos.com/ResNet50_cos_pretrained.tar
+#pretrain_weights: https://paddle-imagenet-models-name.bj.bcebos.com/ResNet50_cos_pretrained.tar
+pretrain_weights: ../weights/s2anet_init.pdparams
 weights: output/s2anet_r50_fpn_1x_dota/model_final.pdparams
 
 
@@ -33,7 +34,7 @@ S2ANetHead:
   feat_in: 256
   feat_out: 256
   num_classes: 15
-  align_conv_type: 'AlignConv'  # AlignConv Conv
+  align_conv_type: 'Conv'  # AlignConv Conv
   align_conv_size: 3
   use_sigmoid_cls: True
 
@@ -48,6 +49,6 @@ S2ANetBBoxPostProcess:
   min_bbox_size: 0.0
   nms:
     name: MultiClassNMS
-    keep_top_k: 2000
+    keep_top_k: -1
     score_threshold: 0.05
     nms_threshold: 0.1
