@@ -541,11 +541,10 @@ class S2ANetHead(nn.Layer):
             fam_cls_score1 = fam_cls_score
 
             # gt_classes 0~14(data), feat_labels 0~14, sigmoid_focal_loss need class>=1
-            feat_labels = feat_labels.reshape(-1) + 1
-            np_one_hot_targets = np.eye(self.cls_out_channels + 1)[feat_labels]
-            np_one_hot_targets = np_one_hot_targets[:, 1:]
-            feat_labels_one_hot = paddle.to_tensor(
-                np_one_hot_targets, dtype='float32', stop_gradient=True)
+            feat_labels = paddle.to_tensor(feat_labels)
+            feat_labels_one_hot = paddle.nn.functional.one_hot(feat_labels, self.cls_out_channels + 1)
+            feat_labels_one_hot = feat_labels_one_hot[:, 1:]
+            feat_labels_one_hot.stop_gradient = True
 
             num_total_samples = paddle.to_tensor(
                 num_total_samples, dtype='float32', stop_gradient=True)
@@ -619,11 +618,11 @@ class S2ANetHead(nn.Layer):
             odm_cls_score1 = odm_cls_score
 
             # gt_classes 0~14(data), feat_labels 0~14, sigmoid_focal_loss need class>=1
-            feat_labels = feat_labels.reshape(-1) + 1
-            np_one_hot_targets = np.eye(self.cls_out_channels + 1)[feat_labels]
-            np_one_hot_targets = np_one_hot_targets[:, 1:]
-            feat_labels_one_hot = paddle.to_tensor(
-                np_one_hot_targets, dtype='float32', stop_gradient=True)
+            feat_labels = paddle.to_tensor(feat_labels)
+            feat_labels_one_hot = paddle.nn.functional.one_hot(feat_labels, self.cls_out_channels + 1)
+            feat_labels_one_hot = feat_labels_one_hot[:, 1:]
+            feat_labels_one_hot.stop_gradient = True
+
             num_total_samples = paddle.to_tensor(
                 num_total_samples, dtype='float32', stop_gradient=True)
             odm_cls = F.sigmoid_focal_loss(
