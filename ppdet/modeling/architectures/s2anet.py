@@ -32,11 +32,7 @@ class S2ANet(BaseArch):
         's2anet_bbox_post_process',
     ]
 
-    def __init__(self,
-                 backbone,
-                 neck,
-                 s2anet_head,
-                 s2anet_bbox_post_process):
+    def __init__(self, backbone, neck, s2anet_head, s2anet_bbox_post_process):
         """
         S2ANet, see https://arxiv.org/pdf/2008.09397.pdf
 
@@ -98,29 +94,7 @@ class S2ANet(BaseArch):
     def get_loss(self, ):
         loss = self._forward()
         return loss
-        s2anet_head_out = self._forward()
-
-        loss = self.s2anet_head.get_loss(self.inputs, s2anet_head_out,
-                                         self.s2anet_anchor_assigner)
-        total_loss = paddle.add_n(list(loss.values()))
-        loss.update({'loss': total_loss})
-        return loss
 
     def get_pred(self):
         output = self._forward()
-        return output
-        s2anet_head_out = self._forward()
-
-        im_shape = self.inputs['im_shape']
-        scale_factor = self.inputs['scale_factor']
-        nms_pre = self.s2anet_bbox_post_process.nms_pre
-        pred_scores, pred_bboxes = self.s2anet_head.get_prediction(
-            s2anet_head_out, nms_pre)
-
-        # post_process
-        pred_cls_score_bbox, bbox_num, index = self.s2anet_bbox_post_process.get_prediction(
-            pred_scores, pred_bboxes, im_shape, scale_factor)
-
-        # output
-        output = {'bbox': pred_cls_score_bbox, 'bbox_num': bbox_num}
         return output

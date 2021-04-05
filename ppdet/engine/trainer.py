@@ -31,7 +31,7 @@ from paddle.static import InputSpec
 
 from ppdet.core.workspace import create
 from ppdet.utils.checkpoint import load_weight, load_pretrain_weight
-from ppdet.utils.visualizer import visualize_results
+from ppdet.utils.visualizer import visualize_results, save_result
 from ppdet.metrics import Metric, COCOMetric, VOCMetric, WiderFaceMetric, get_infer_results
 from ppdet.data.source.category import get_categories
 import ppdet.utils.stats as stats
@@ -382,6 +382,7 @@ class Trainer(object):
                     save_name))
                 image.save(save_name, quality=95)
                 if save_txt:
+                    save_path = os.path.splitext(save_name)[0] + '.txt'
                     save_result(save_path, bbox_res, draw_threshold)
                 start = end
 

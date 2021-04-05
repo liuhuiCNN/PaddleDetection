@@ -1,6 +1,5 @@
 architecture: S2ANet
-#pretrain_weights: https://paddle-imagenet-models-name.bj.bcebos.com/ResNet50_cos_pretrained.tar
-pretrain_weights: ../weights/s2anet_init.pdparams
+pretrain_weights: https://paddledet.bj.bcebos.com/models/pretrained/ResNet50_cos_pretrained.pdparams
 weights: output/s2anet_r50_fpn_1x_dota/model_final.pdparams
 
 

@@ -155,13 +155,6 @@ def load_pretrain_weight(model, pretrain_weight):
 
     model_dict = model.state_dict()
 
-    # for compare loss debug
-    print('path====', path)
-    pre_state_dict = paddle.load(path + '.pdparams')
-    model.set_state_dict(pre_state_dict)
-    return
-
-
     weights_path = path + '.pdparams'
     param_state_dict = paddle.load(weights_path)
     ignore_set = set()
@@ -184,52 +177,6 @@ def load_pretrain_weight(model, pretrain_weight):
     model.set_dict(param_state_dict)
     logger.info('Finish loading model weights: {}'.format(weights_path))
 
-
-def load_pretrain_weight_0(model,
-                         pretrain_weight,
-                         load_static_weights=False,
-                         weight_type='pretrain'):
-    assert weight_type in ['pretrain', 'finetune']
-    if is_url(pretrain_weight):
-        pretrain_weight = get_weights_path_dist(pretrain_weight)
-
-    #path = _strip_postfix(pretrain_weight)
-    path = pretrain_weight
-    if not (os.path.isdir(path) or os.path.isfile(path) or
-            os.path.exists(path + '.pdparams')):
-        raise ValueError("Model pretrain path {} does not "
-                         "exists.".format(path))
-
-    model_dict = model.state_dict()
-
-    if load_static_weights:
-        pre_state_dict = paddle.static.load_program_state(path)
-        param_state_dict = {}
-        for key in model_dict.keys():
-            weight_name = model_dict[key].name
-            if weight_name in pre_state_dict.keys():
-                logger.info('Load weight: {}, shape: {}'.format(
-                    weight_name, pre_state_dict[weight_name].shape))
-                param_state_dict[key] = pre_state_dict[weight_name]
-            else:
-                if 'backbone' in key:
-                    logger.info('Lack weight: {}, structure name: {}'.format(
-                        weight_name, key))
-                param_state_dict[key] = model_dict[key]
-        model.set_dict(param_state_dict)
-        return
-
-    param_state_dict = paddle.load(path + '.pdparams')
-    if weight_type == 'pretrain':
-        model.backbone.set_dict(param_state_dict)
-    else:
-        ignore_set = set()
-        for name, weight in model_dict:
-            if name in param_state_dict:
-                if weight.shape != param_state_dict[name].shape:
-                    param_state_dict.pop(name, None)
-        model.set_dict(param_state_dict)
-    return
 
 def save_model(model, optimizer, save_dir, save_name, last_epoch):
     """
