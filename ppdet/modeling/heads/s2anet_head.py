@@ -227,6 +227,7 @@ class S2ANetHead(nn.Layer):
         align_conv_type (str): align_conv_type ['Conv', 'AlignConv']
         align_conv_size (int): kernel size of align_conv
         use_sigmoid_cls (bool): use sigmoid_cls or not
+        reg_loss_weight (list): loss weight for regression
     """
     __shared__ = ['num_classes']
     __inject__ = ['anchor_assign']
@@ -245,7 +246,8 @@ class S2ANetHead(nn.Layer):
             align_conv_type='AlignConv',
             align_conv_size=3,
             use_sigmoid_cls=True,
-            anchor_assign=RBoxAssigner().__dict__, ):
+            anchor_assign=RBoxAssigner().__dict__,
+            reg_loss_weight=[1.0, 1.0, 1.0, 1.0, 1.0] ):
         super(S2ANetHead, self).__init__()
         self.stacked_convs = stacked_convs
         self.feat_in = feat_in
@@ -265,6 +267,7 @@ class S2ANetHead(nn.Layer):
         self.cls_out_channels = num_classes if self.use_sigmoid_cls else 1
         self.sampling = False
         self.anchor_assign = anchor_assign
+        self.reg_loss_weight = reg_loss_weight
 
         self.s2anet_head_out = None
 
@@ -579,6 +582,8 @@ class S2ANetHead(nn.Layer):
             fam_bbox_pred = paddle.squeeze(fam_bbox_pred, axis=0)
             fam_bbox_pred = paddle.reshape(fam_bbox_pred, [-1, 5])
             fam_bbox = self.smooth_l1_loss(fam_bbox_pred, feat_bbox_targets)
+            loss_weight = paddle.to_tensor(self.reg_loss_weight, dtype='float32', stop_gradient=True)
+            fam_bbox = paddle.multiply(fam_bbox, loss_weight)
             feat_bbox_weights = paddle.to_tensor(
                 feat_bbox_weights, stop_gradient=True)
             fam_bbox = fam_bbox * feat_bbox_weights
@@ -587,6 +592,7 @@ class S2ANetHead(nn.Layer):
             fam_bbox_losses.append(fam_bbox_total)
 
         fam_cls_loss = paddle.add_n(fam_cls_losses)
+        fam_cls_loss = fam_cls_loss * 2.0
         fam_reg_loss = paddle.add_n(fam_bbox_losses)
         return fam_cls_loss, fam_reg_loss
 
@@ -653,10 +659,13 @@ class S2ANetHead(nn.Layer):
             feat_bbox_targets = paddle.reshape(feat_bbox_targets, [-1, 5])
             feat_bbox_targets.stop_gradient = True
 
-            odm_bbox_pred = fam_reg_branch_list[idx]
+            odm_bbox_pred = odm_reg_branch_list[idx]
             odm_bbox_pred = paddle.squeeze(odm_bbox_pred, axis=0)
             odm_bbox_pred = paddle.reshape(odm_bbox_pred, [-1, 5])
             odm_bbox = self.smooth_l1_loss(odm_bbox_pred, feat_bbox_targets)
+            loss_weight = paddle.ones_like(odm_bbox)
+            loss_weight[:, 4] = loss_weight[:, 4] * 5.0
+            odm_bbox = paddle.multiply(odm_bbox, loss_weight)
             feat_bbox_weights = paddle.to_tensor(
                 feat_bbox_weights, stop_gradient=True)
             odm_bbox = odm_bbox * feat_bbox_weights
@@ -664,6 +673,7 @@ class S2ANetHead(nn.Layer):
             odm_bbox_losses.append(odm_bbox_total)
 
         odm_cls_loss = paddle.add_n(odm_cls_losses)
+        odm_cls_loss = odm_cls_loss * 2.0
         odm_reg_loss = paddle.add_n(odm_bbox_losses)
         return odm_cls_loss, odm_reg_loss
 
@@ -696,7 +706,7 @@ class S2ANetHead(nn.Layer):
                 anchor = bbox_util.rect2rbox(anchor)
                 anchors_list_all.extend(anchor)
             anchors_list_all = np.array(anchors_list_all)
-
+            
             # get im_feat
             fam_cls_feats_list = [e[im_id] for e in self.s2anet_head_out[0]]
             fam_reg_feats_list = [e[im_id] for e in self.s2anet_head_out[1]]
@@ -755,7 +765,7 @@ class S2ANetHead(nn.Layer):
             anchors = self.anchor_generators[i].grid_anchors(
                 featmap_sizes[i], self.anchor_strides[i])
             anchor_list.append(anchors)
-
+        
         # for each image, we compute valid flags of multi level anchors
         valid_flag_list = []
         for i in range(num_levels):
@@ -852,7 +862,6 @@ class S2ANetHead(nn.Layer):
             target_stds = (1.0, 1.0, 1.0, 1.0, 1.0)
             bboxes = bbox_util.delta2rbox(anchors, bbox_pred, target_means,
                                           target_stds)
-
             mlvl_bboxes.append(bboxes)
             mlvl_scores.append(scores)
 
