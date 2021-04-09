@@ -1,5 +1,6 @@
 architecture: S2ANet
-pretrain_weights: https://paddledet.bj.bcebos.com/models/pretrained/ResNet50_cos_pretrained.pdparams
+#pretrain_weights: https://paddledet.bj.bcebos.com/models/pretrained/ResNet50_cos_pretrained.pdparams
+pretrain_weights: ../weights/s2anet_init_new.pdparams
 weights: output/s2anet_r50_fpn_1x_dota/model_final.pdparams
 
 
@@ -51,3 +52,5 @@ S2ANetBBoxPostProcess:
     keep_top_k: -1
     score_threshold: 0.05
     nms_threshold: 0.1
+    normalized: False
+    #background_label: -1
