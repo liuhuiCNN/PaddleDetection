@@ -251,6 +251,7 @@ class RBoxAssigner(object):
             from rbox_iou_ops import rbox_iou
         except Exception as e:
             print('import custom_ops error', e)
+            import sys
             sys.exit(-1)
 
         iou = rbox_iou(gt_bboxes_xc_yc, anchors_xc_yc)

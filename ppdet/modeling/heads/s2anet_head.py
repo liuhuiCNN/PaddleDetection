@@ -247,7 +247,7 @@ class S2ANetHead(nn.Layer):
             align_conv_size=3,
             use_sigmoid_cls=True,
             anchor_assign=RBoxAssigner().__dict__,
-            reg_loss_weight=[1.0, 1.0, 1.0, 1.0, 1.0] ):
+            reg_loss_weight=[1.0, 1.0, 1.0, 1.0, 1.0]):
         super(S2ANetHead, self).__init__()
         self.stacked_convs = stacked_convs
         self.feat_in = feat_in

@@ -169,8 +169,6 @@ def load_pretrain_weight(model, pretrain_weight):
                         name, list(param_state_dict[name].shape), weight.shape))
                 param_state_dict.pop(name, None)
         else:
-            print('!!!!!!! name not find', name)
-            print('param_state_dict.keys()', param_state_dict.keys())
             lack_modules.add(name.split('.')[0])
             logger.debug('Lack weights: {}'.format(name))
 
