@@ -422,10 +422,10 @@ def poly_to_rbox(polys):
         pt3 = (poly[4], poly[5])
         pt4 = (poly[6], poly[7])
 
-        edge1 = np.sqrt((pt1[0] - pt2[0]) * (pt1[0] - pt2[0]) + (pt1[
-            1] - pt2[1]) * (pt1[1] - pt2[1]))
-        edge2 = np.sqrt((pt2[0] - pt3[0]) * (pt2[0] - pt3[0]) + (pt2[
-            1] - pt3[1]) * (pt2[1] - pt3[1]))
+        edge1 = np.sqrt((pt1[0] - pt2[0]) * (pt1[0] - pt2[0]) + (pt1[1] - pt2[
+            1]) * (pt1[1] - pt2[1]))
+        edge2 = np.sqrt((pt2[0] - pt3[0]) * (pt2[0] - pt3[0]) + (pt2[1] - pt3[
+            1]) * (pt2[1] - pt3[1]))
 
         width = max(edge1, edge2)
         height = min(edge1, edge2)
@@ -514,7 +514,7 @@ def rbox2poly(rrects):
     polys = []
     for rrect in rrects:
         x_ctr, y_ctr, width, height, angle = rrect[:5]
-        tl_x, tl_y, br_x, br_y = -width/2, -height/2, width/2, height/2
+        tl_x, tl_y, br_x, br_y = -width / 2, -height / 2, width / 2, height / 2
         rect = np.array([[tl_x, br_x, br_x, tl_x], [tl_y, tl_y, br_y, br_y]])
         R = np.array([[np.cos(angle), -np.sin(angle)],
                       [np.sin(angle), np.cos(angle)]])
@@ -522,7 +522,7 @@ def rbox2poly(rrects):
         x0, x1, x2, x3 = poly[0, :4] + x_ctr
         y0, y1, y2, y3 = poly[1, :4] + y_ctr
         poly = np.array([x0, y0, x1, y1, x2, y2, x3, y3], dtype=np.float32)
+        poly = get_best_begin_point_single(poly)
         polys.append(poly)
     polys = np.array(polys)
-    polys = get_best_begin_point(polys)
     return polys

@@ -805,25 +805,6 @@ class S2ANetHead(nn.Layer):
 
         return refine_anchors_list, valid_flag_list
 
-    def rbox2poly_single(self, rrect, get_best_begin_point=False):
-        """
-        rrect:[x_ctr,y_ctr,w,h,angle]
-        to
-        poly:[x0,y0,x1,y1,x2,y2,x3,y3]
-        """
-        x_ctr, y_ctr, width, height, angle = rrect[:5]
-        tl_x, tl_y, br_x, br_y = -width / 2, -height / 2, width / 2, height / 2
-        # rect 2x4
-        rect = np.array([[tl_x, br_x, br_x, tl_x], [tl_y, tl_y, br_y, br_y]])
-        R = np.array([[np.cos(angle), -np.sin(angle)],
-                      [np.sin(angle), np.cos(angle)]])
-        # poly
-        poly = R.dot(rect)
-        x0, x1, x2, x3 = poly[0, :4] + x_ctr
-        y0, y1, y2, y3 = poly[1, :4] + y_ctr
-        poly = np.array([x0, y0, x1, y1, x2, y2, x3, y3], dtype=np.float32)
-        return poly
-
     def get_bboxes(self, cls_score_list, bbox_pred_list, mlvl_anchors, nms_pre,
                    cls_out_channels, use_sigmoid_cls):
         assert len(cls_score_list) == len(bbox_pred_list) == len(mlvl_anchors)
