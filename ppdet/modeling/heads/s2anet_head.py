@@ -663,8 +663,7 @@ class S2ANetHead(nn.Layer):
             odm_bbox_pred = paddle.squeeze(odm_bbox_pred, axis=0)
             odm_bbox_pred = paddle.reshape(odm_bbox_pred, [-1, 5])
             odm_bbox = self.smooth_l1_loss(odm_bbox_pred, feat_bbox_targets)
-            loss_weight = paddle.ones_like(odm_bbox)
-            loss_weight[:, 4] = loss_weight[:, 4] * 5.0
+            loss_weight = paddle.to_tensor(self.reg_loss_weight, dtype='float32', stop_gradient=True)
             odm_bbox = paddle.multiply(odm_bbox, loss_weight)
             feat_bbox_weights = paddle.to_tensor(
                 feat_bbox_weights, stop_gradient=True)
