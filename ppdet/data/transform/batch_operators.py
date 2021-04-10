@@ -27,7 +27,7 @@ from .operators import register_op, BaseOperator, Resize
 from .op_helper import jaccard_overlap, gaussian2D
 from scipy import ndimage
 
-from ppdet.modeling.utils import bbox_util
+from ppdet.modeling import bbox_utils
 from ppdet.utils.logger import setup_logger
 logger = setup_logger(__name__)
 
@@ -893,7 +893,7 @@ class RboxPadBatch(BaseOperator):
                 sample['is_crowd'] = is_crowd_data
                 # ploy to rbox
                 polys = sample['gt_rbox2poly']
-                rbox = bbox_util.poly_to_rbox(polys)
+                rbox = bbox_utils.poly_to_rbox(polys)
                 sample['gt_rbox'] = rbox
 
         return samples

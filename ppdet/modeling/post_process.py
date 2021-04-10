@@ -17,7 +17,7 @@ import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 from ppdet.core.workspace import register
-from ppdet.modeling.bbox_utils import nonempty_bbox, bbox_util
+from ppdet.modeling.bbox_utils import nonempty_bbox, rbox2poly
 from . import ops
 try:
     from collections.abc import Sequence
@@ -239,7 +239,7 @@ class S2ANetBBoxPostProcess(object):
         scale_factor : [N, 2]  scale_factor
         """
         # TODO: support bs>1
-        pred_ploys = bbox_util.rbox2poly(pred_bboxes.numpy())
+        pred_ploys = rbox2poly(pred_bboxes.numpy())
         pred_ploys = paddle.to_tensor(pred_ploys)
         pred_ploys = paddle.reshape(
             pred_ploys, [1, pred_ploys.shape[0], pred_ploys.shape[1]])

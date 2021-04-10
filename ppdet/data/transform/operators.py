@@ -39,7 +39,7 @@ from PIL import Image, ImageEnhance, ImageDraw
 
 from ppdet.core.workspace import serializable
 from ppdet.modeling.layers import AnchorGrid
-from ppdet.modeling.utils import bbox_util
+from ppdet.modeling import bbox_utils
 
 from .op_helper import (satisfy_sample_constraint, filter_and_process,
                         generate_sample_bbox, clip_bbox, data_anchor_sampling,
@@ -546,7 +546,7 @@ class RandomFlip(BaseOperator):
         bbox[:, 2] = width - oldx2
         bbox[:, 4] = width - oldx3
         bbox[:, 6] = width - oldx4
-        bbox = [bbox_util.get_best_begin_point_single(e) for e in bbox]
+        bbox = [bbox_utils.get_best_begin_point_single(e) for e in bbox]
         bbox = np.array(bbox)
         return bbox
 
@@ -1984,7 +1984,7 @@ class Rbox2Poly(BaseOperator):
         x2 = x_ctr + width / 2.0
         y2 = y_ctr + height / 2.0
         sample['gt_bbox'] = np.stack([x1, y1, x2, y2], axis=1)
-        polys = bbox_util.rbox2poly(rrects)
+        polys = bbox_utils.rbox2poly(rrects)
         print('polys', polys.shape)
         sample['gt_rbox2poly'] = polys
         return sample
