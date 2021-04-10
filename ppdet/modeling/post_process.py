@@ -17,8 +17,7 @@ import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 from ppdet.core.workspace import register
-from ppdet.modeling.bbox_utils import nonempty_bbox
-from ppdet.modeling import bbox_util
+from ppdet.modeling.bbox_utils import nonempty_bbox, bbox_util
 from . import ops
 try:
     from collections.abc import Sequence
