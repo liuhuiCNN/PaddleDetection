@@ -146,6 +146,7 @@ def load_pretrain_weight(model, pretrain_weight):
         pretrain_weight = get_weights_path_dist(pretrain_weight)
 
     path = _strip_postfix(pretrain_weight)
+    print('path', path)
     if not (os.path.isdir(path) or os.path.isfile(path) or
             os.path.exists(path + '.pdparams')):
         raise ValueError("Model pretrain path `{}` does not exists. "
@@ -161,6 +162,7 @@ def load_pretrain_weight(model, pretrain_weight):
     lack_modules = set()
     for name, weight in model_dict.items():
         if name in param_state_dict.keys():
+            print('name', name)
             if weight.shape != list(param_state_dict[name].shape):
                 logger.info(
                     '{} not used, shape {} unmatched with {} in model.'.format(
