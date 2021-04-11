@@ -20,6 +20,7 @@ from ppdet.core.workspace import register
 from ppdet.modeling import ops
 from ppdet.modeling import bbox_utils
 from ppdet.modeling.proposal_generator.target_layer import RBoxAssigner
+from ppdet.modeling.layers import DeformableConvV2
 import numpy as np
 
 
@@ -232,22 +233,21 @@ class S2ANetHead(nn.Layer):
     __shared__ = ['num_classes']
     __inject__ = ['anchor_assign']
 
-    def __init__(
-            self,
-            stacked_convs=2,
-            feat_in=256,
-            feat_out=256,
-            num_classes=15,
-            anchor_strides=[8, 16, 32, 64, 128],
-            anchor_scales=[4],
-            anchor_ratios=[1.0],
-            target_means=(.0, .0, .0, .0, .0),
-            target_stds=(1.0, 1.0, 1.0, 1.0, 1.0),
-            align_conv_type='AlignConv',
-            align_conv_size=3,
-            use_sigmoid_cls=True,
-            anchor_assign=RBoxAssigner().__dict__,
-            reg_loss_weight=[1.0, 1.0, 1.0, 1.0, 1.0]):
+    def __init__(self,
+                 stacked_convs=2,
+                 feat_in=256,
+                 feat_out=256,
+                 num_classes=15,
+                 anchor_strides=[8, 16, 32, 64, 128],
+                 anchor_scales=[4],
+                 anchor_ratios=[1.0],
+                 target_means=(.0, .0, .0, .0, .0),
+                 target_stds=(1.0, 1.0, 1.0, 1.0, 1.0),
+                 align_conv_type='AlignConv',
+                 align_conv_size=3,
+                 use_sigmoid_cls=True,
+                 anchor_assign=RBoxAssigner().__dict__,
+                 reg_loss_weight=[1.0, 1.0, 1.0, 1.0, 1.0]):
         super(S2ANetHead, self).__init__()
         self.stacked_convs = stacked_convs
         self.feat_in = feat_in
@@ -334,6 +334,15 @@ class S2ANetHead(nn.Layer):
                 self.feat_out,
                 self.align_conv_size,
                 padding=(self.align_conv_size - 1) // 2,
+                bias_attr=ParamAttr(initializer=Constant(0)))
+
+        elif self.align_conv_type == "DCN":
+            self.align_conv = DeformableConvV2(
+                feat_out,
+                feat_out,
+                kernel_size=self.align_conv_size,
+                padding=(self.align_conv_size - 1) // 2,
+                weight_attr=ParamAttr(initializer=Normal(0.0, 0.01)),
                 bias_attr=ParamAttr(initializer=Constant(0)))
 
         self.or_conv = nn.Conv2D(
@@ -451,8 +460,7 @@ class S2ANetHead(nn.Layer):
                                              refine_anchor.clone(),
                                              self.anchor_strides[i])
             elif self.align_conv_type == 'DCN':
-                align_offset = self.align_conv_offset(feat)
-                align_feat = self.align_conv(feat, align_offset)
+                align_feat = self.align_conv(feat)
             elif self.align_conv_type == 'GA_DCN':
                 align_offset = self.align_conv_offset(feat)
                 align_feat = self.align_conv(feat, align_offset)
@@ -582,7 +590,8 @@ class S2ANetHead(nn.Layer):
             fam_bbox_pred = paddle.squeeze(fam_bbox_pred, axis=0)
             fam_bbox_pred = paddle.reshape(fam_bbox_pred, [-1, 5])
             fam_bbox = self.smooth_l1_loss(fam_bbox_pred, feat_bbox_targets)
-            loss_weight = paddle.to_tensor(self.reg_loss_weight, dtype='float32', stop_gradient=True)
+            loss_weight = paddle.to_tensor(
+                self.reg_loss_weight, dtype='float32', stop_gradient=True)
             fam_bbox = paddle.multiply(fam_bbox, loss_weight)
             feat_bbox_weights = paddle.to_tensor(
                 feat_bbox_weights, stop_gradient=True)
@@ -663,7 +672,8 @@ class S2ANetHead(nn.Layer):
             odm_bbox_pred = paddle.squeeze(odm_bbox_pred, axis=0)
             odm_bbox_pred = paddle.reshape(odm_bbox_pred, [-1, 5])
             odm_bbox = self.smooth_l1_loss(odm_bbox_pred, feat_bbox_targets)
-            loss_weight = paddle.to_tensor(self.reg_loss_weight, dtype='float32', stop_gradient=True)
+            loss_weight = paddle.to_tensor(
+                self.reg_loss_weight, dtype='float32', stop_gradient=True)
             odm_bbox = paddle.multiply(odm_bbox, loss_weight)
             feat_bbox_weights = paddle.to_tensor(
                 feat_bbox_weights, stop_gradient=True)
@@ -705,7 +715,7 @@ class S2ANetHead(nn.Layer):
                 anchor = bbox_utils.rect2rbox(anchor)
                 anchors_list_all.extend(anchor)
             anchors_list_all = np.array(anchors_list_all)
-            
+
             # get im_feat
             fam_cls_feats_list = [e[im_id] for e in self.s2anet_head_out[0]]
             fam_reg_feats_list = [e[im_id] for e in self.s2anet_head_out[1]]
@@ -764,7 +774,7 @@ class S2ANetHead(nn.Layer):
             anchors = self.anchor_generators[i].grid_anchors(
                 featmap_sizes[i], self.anchor_strides[i])
             anchor_list.append(anchors)
-        
+
         # for each image, we compute valid flags of multi level anchors
         valid_flag_list = []
         for i in range(num_levels):
@@ -841,7 +851,7 @@ class S2ANetHead(nn.Layer):
             target_means = (.0, .0, .0, .0, .0)
             target_stds = (1.0, 1.0, 1.0, 1.0, 1.0)
             bboxes = bbox_utils.delta2rbox(anchors, bbox_pred, target_means,
-                                          target_stds)
+                                           target_stds)
             mlvl_bboxes.append(bboxes)
             mlvl_scores.append(scores)
 
