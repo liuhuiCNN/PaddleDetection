@@ -20,7 +20,6 @@ from ppdet.core.workspace import register
 from ppdet.modeling import ops
 from ppdet.modeling import bbox_utils
 from ppdet.modeling.proposal_generator.target_layer import RBoxAssigner
-from ppdet.modeling.layers import DeformableConvV2
 import numpy as np
 
 
@@ -259,7 +258,7 @@ class S2ANetHead(nn.Layer):
         self.anchor_base_sizes = list(anchor_strides)
         self.target_means = target_means
         self.target_stds = target_stds
-        assert align_conv_type in ['AlignConv', 'Conv']
+        assert align_conv_type in ['AlignConv', 'Conv', 'DCN']
         self.align_conv_type = align_conv_type
         self.align_conv_size = align_conv_size
 
@@ -337,13 +336,20 @@ class S2ANetHead(nn.Layer):
                 bias_attr=ParamAttr(initializer=Constant(0)))
 
         elif self.align_conv_type == "DCN":
-            self.align_conv = DeformableConvV2(
-                feat_out,
-                feat_out,
-                kernel_size=self.align_conv_size,
-                padding=(self.align_conv_size - 1) // 2,
+            self.align_conv_offset = nn.Conv2D(
+                self.feat_out,
+                2 * self.align_conv_size**2,
+                1,
                 weight_attr=ParamAttr(initializer=Normal(0.0, 0.01)),
                 bias_attr=ParamAttr(initializer=Constant(0)))
+
+            self.align_conv = paddle.vision.ops.DeformConv(
+                self.feat_out,
+                self.feat_out,
+                self.align_conv_size,
+                padding=(self.align_conv_size - 1) // 2,
+                weight_attr=ParamAttr(initializer=Normal(0.0, 0.01)),
+                bias_attr=False)
 
         self.or_conv = nn.Conv2D(
             self.feat_out,
@@ -460,8 +466,6 @@ class S2ANetHead(nn.Layer):
                                              refine_anchor.clone(),
                                              self.anchor_strides[i])
             elif self.align_conv_type == 'DCN':
-                align_feat = self.align_conv(feat)
-            elif self.align_conv_type == 'GA_DCN':
                 align_offset = self.align_conv_offset(feat)
                 align_feat = self.align_conv(feat, align_offset)
             elif self.align_conv_type == 'Conv':
