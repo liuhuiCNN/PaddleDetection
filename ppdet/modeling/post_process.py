@@ -293,14 +293,14 @@ class S2ANetBBoxPostProcess(object):
         bboxes[:, 1::2] = bboxes[:, 1::2] / scale_factor[1]
 
         zeros = paddle.zeros_like(origin_h)
-        x1 = paddle.maximum(paddle.minimum(bboxes[:, 0], origin_w-1), zeros)
-        y1 = paddle.maximum(paddle.minimum(bboxes[:, 1], origin_h-1), zeros)
-        x2 = paddle.maximum(paddle.minimum(bboxes[:, 2], origin_w-1), zeros)
-        y2 = paddle.maximum(paddle.minimum(bboxes[:, 3], origin_h-1), zeros)
-        x3 = paddle.maximum(paddle.minimum(bboxes[:, 4], origin_w-1), zeros)
-        y3 = paddle.maximum(paddle.minimum(bboxes[:, 5], origin_h-1), zeros)
-        x4 = paddle.maximum(paddle.minimum(bboxes[:, 6], origin_w-1), zeros)
-        y4 = paddle.maximum(paddle.minimum(bboxes[:, 7], origin_h-1), zeros)
+        x1 = paddle.maximum(paddle.minimum(bboxes[:, 0], origin_w - 1), zeros)
+        y1 = paddle.maximum(paddle.minimum(bboxes[:, 1], origin_h - 1), zeros)
+        x2 = paddle.maximum(paddle.minimum(bboxes[:, 2], origin_w - 1), zeros)
+        y2 = paddle.maximum(paddle.minimum(bboxes[:, 3], origin_h - 1), zeros)
+        x3 = paddle.maximum(paddle.minimum(bboxes[:, 4], origin_w - 1), zeros)
+        y3 = paddle.maximum(paddle.minimum(bboxes[:, 5], origin_h - 1), zeros)
+        x4 = paddle.maximum(paddle.minimum(bboxes[:, 6], origin_w - 1), zeros)
+        y4 = paddle.maximum(paddle.minimum(bboxes[:, 7], origin_h - 1), zeros)
         bbox = paddle.stack([x1, y1, x2, y2, x3, y3, x4, y4], axis=-1)
         bboxes = (bbox, bbox_num)
         return bboxes

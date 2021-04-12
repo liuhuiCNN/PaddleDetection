@@ -188,6 +188,7 @@ class RBoxAssigner(object):
         min_iou_thr (float): the min threshold of samples
         ignore_iof_thr (int): the ignored threshold
     """
+
     def __init__(self,
                  pos_iou_thr=0.5,
                  neg_iou_thr=0.4,
@@ -332,7 +333,7 @@ class RBoxAssigner(object):
         pos_sampled_gt_boxes = gt_bboxes[anchor_gt_bbox_inds[pos_inds]]
         if len(pos_inds) > 0:
             pos_bbox_targets = bbox_utils.rbox2delta(pos_sampled_anchors,
-                                                    pos_sampled_gt_boxes)
+                                                     pos_sampled_gt_boxes)
             bbox_targets[pos_inds, :] = pos_bbox_targets
             bbox_weights[pos_inds, :] = 1.0
 

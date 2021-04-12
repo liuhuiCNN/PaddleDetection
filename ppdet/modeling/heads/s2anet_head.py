@@ -343,7 +343,7 @@ class S2ANetHead(nn.Layer):
                 weight_attr=ParamAttr(initializer=Normal(0.0, 0.01)),
                 bias_attr=ParamAttr(initializer=Constant(0)))
 
-            self.align_conv = paddle.vision.ops.DeformConv(
+            self.align_conv = paddle.vision.ops.DeformConv2D(
                 self.feat_out,
                 self.feat_out,
                 self.align_conv_size,
