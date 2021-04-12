@@ -580,9 +580,10 @@ class RandomFlip(BaseOperator):
 
             if 'gt_segm' in sample and sample['gt_segm'].any():
                 sample['gt_segm'] = sample['gt_segm'][:, :, ::-1]
-            
+
             if 'gt_rbox2poly' in sample and sample['gt_rbox2poly'].any():
-                sample['gt_rbox2poly'] = self.apply_rbox(sample['gt_rbox2poly'], width)
+                sample['gt_rbox2poly'] = self.apply_rbox(sample['gt_rbox2poly'],
+                                                         width)
 
             if 'gt_rbox2poly' in sample and sample['gt_rbox2poly'].any():
                 sample['gt_rbox2poly'] = self.apply_rbox(sample['gt_rbox2poly'],
