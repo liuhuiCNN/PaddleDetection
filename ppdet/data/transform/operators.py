@@ -584,6 +584,10 @@ class RandomFlip(BaseOperator):
             if 'gt_rbox2poly' in sample and sample['gt_rbox2poly'].any():
                 sample['gt_rbox2poly'] = self.apply_rbox(sample['gt_rbox2poly'], width)
 
+            if 'gt_rbox2poly' in sample and sample['gt_rbox2poly'].any():
+                sample['gt_rbox2poly'] = self.apply_rbox(sample['gt_rbox2poly'],
+                                                         width)
+
             sample['flipped'] = True
             sample['image'] = im
         return sample
@@ -1985,6 +1989,5 @@ class Rbox2Poly(BaseOperator):
         y2 = y_ctr + height / 2.0
         sample['gt_bbox'] = np.stack([x1, y1, x2, y2], axis=1)
         polys = bbox_utils.rbox2poly(rrects)
-        print('polys', polys.shape)
         sample['gt_rbox2poly'] = polys
         return sample
