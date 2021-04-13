@@ -585,10 +585,6 @@ class RandomFlip(BaseOperator):
                 sample['gt_rbox2poly'] = self.apply_rbox(sample['gt_rbox2poly'],
                                                          width)
 
-            if 'gt_rbox2poly' in sample and sample['gt_rbox2poly'].any():
-                sample['gt_rbox2poly'] = self.apply_rbox(sample['gt_rbox2poly'],
-                                                         width)
-
             sample['flipped'] = True
             sample['image'] = im
         return sample
