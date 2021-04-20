@@ -352,6 +352,7 @@ class Trainer(object):
             for key in ['im_shape', 'scale_factor', 'im_id']:
                 outs[key] = data[key]
             for key, value in outs.items():
+                print('key', key)
                 outs[key] = value.numpy()
 
             batch_res = get_infer_results(outs, clsid2catid)
@@ -427,24 +428,31 @@ class Trainer(object):
         }]
 
         # dy2st and save model
-        if self.slim is None or self.cfg['slim'] != 'QAT':
-            static_model = paddle.jit.to_static(
-                self.model, input_spec=input_spec)
-            # NOTE: dy2st do not pruned program, but jit.save will prune program
-            # input spec, prune input spec here and save with pruned input spec
-            pruned_input_spec = self._prune_input_spec(
-                input_spec, static_model.forward.main_program,
-                static_model.forward.outputs)
-            paddle.jit.save(
-                static_model,
-                os.path.join(save_dir, 'model'),
-                input_spec=pruned_input_spec)
-            logger.info("Export model and saved in {}".format(save_dir))
-        else:
-            self.slim.save_quantized_model(
-                self.model,
-                os.path.join(save_dir, 'model'),
-                input_spec=input_spec)
+        skip_slim = False
+        if not skip_slim:
+            print('skip_slim', skip_slim)
+            if self.slim is None or self.cfg['slim'] != 'QAT':
+                print('kkkk kkk kkk')
+                static_model = paddle.jit.to_static(
+                    self.model, input_spec=input_spec)
+                print('static_model', static_model)
+                print('input_spec', input_spec)
+                # NOTE: dy2st do not pruned program, but jit.save will prune program
+                # input spec, prune input spec here and save with pruned input spec
+                pruned_input_spec = self._prune_input_spec(
+                    input_spec, static_model.forward.main_program,
+                    static_model.forward.outputs)
+                paddle.jit.save(
+                    static_model,
+                    os.path.join(save_dir, 'model'),
+                    input_spec=pruned_input_spec)
+                logger.info("Export model and saved in {}".format(save_dir))
+            else:
+                print('zzz zzz zzz')
+                self.slim.save_quantized_model(
+                    self.model,
+                    os.path.join(save_dir, 'model'),
+                    input_spec=input_spec)
 
     def _prune_input_spec(self, input_spec, program, targets):
         # try to prune static program to figure out pruned input spec

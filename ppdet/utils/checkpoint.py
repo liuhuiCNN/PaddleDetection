@@ -162,7 +162,7 @@ def load_pretrain_weight(model, pretrain_weight):
     lack_modules = set()
     for name, weight in model_dict.items():
         if name in param_state_dict.keys():
-            print('name', name)
+            #print('name', name)
             if weight.shape != list(param_state_dict[name].shape):
                 logger.info(
                     '{} not used, shape {} unmatched with {} in model.'.format(

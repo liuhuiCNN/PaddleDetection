@@ -112,6 +112,7 @@ def draw_bbox(image, im_id, catid2name, bboxes, threshold):
             ymin = min(y1, y2, y3, y4)
 
         # draw label
+        print('catid', catid, score)
         text = "{} {:.2f}".format(catid2name[catid], score)
         tw, th = draw.textsize(text)
         draw.rectangle(
