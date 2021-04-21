@@ -111,7 +111,8 @@ class BBoxPostProcess(object):
         pred_score = bboxes[:, 1:2]
         pred_bbox = bboxes[:, 2:]
         # rescale bbox to original image
-        print('pred_bbox', pred_bbox.shape, 'scale_factor_list', scale_factor_list.shape)
+        print('pred_bbox', pred_bbox.shape, 'scale_factor_list',
+              scale_factor_list.shape)
         scaled_bbox = pred_bbox / scale_factor_list
         origin_h = self.origin_shape_list[:, 0]
         origin_w = self.origin_shape_list[:, 1]
@@ -261,12 +262,11 @@ class S2ANetBBoxPostProcess(object):
 
         # post process scale
         pred_cls_score_bbox = paddle.reshape(pred_cls_score_bbox, [-1, 10])
-        pred_bbox, bbox_num = self.post_process(pred_cls_score_bbox[:, 2:],
-                                                bbox_num, im_shape[0],
-                                                scale_factor[0])
+        pred_bbox, bbox_num = self.post_process(
+            pred_cls_score_bbox[:, 2:], bbox_num, im_shape[0], scale_factor[0])
 
-
-        pred_cls_score_bbox = paddle.concat([pred_cls_score_bbox[:, 0:2], pred_bbox], axis=1)
+        pred_cls_score_bbox = paddle.concat(
+            [pred_cls_score_bbox[:, 0:2], pred_bbox], axis=1)
 
         return pred_cls_score_bbox, bbox_num, index
 

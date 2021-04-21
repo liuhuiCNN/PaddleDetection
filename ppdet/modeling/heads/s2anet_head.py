@@ -456,9 +456,15 @@ class S2ANetHead(nn.Layer):
 
             fam_reg1 = fam_reg.clone()
             fam_reg1.stop_gradient = True
-            pd_target_means = paddle.to_tensor(np.array(self.target_means, dtype=np.float32), dtype='float32')
-            pd_target_stds = paddle.to_tensor(np.array(self.target_stds, dtype=np.float32), dtype='float32')
-            pd_init_anchors = paddle.to_tensor(np.array(init_anchors, dtype=np.float32), dtype='float32')
+            pd_target_means = paddle.to_tensor(
+                np.array(
+                    self.target_means, dtype=np.float32), dtype='float32')
+            pd_target_stds = paddle.to_tensor(
+                np.array(
+                    self.target_stds, dtype=np.float32), dtype='float32')
+            pd_init_anchors = paddle.to_tensor(
+                np.array(
+                    init_anchors, dtype=np.float32), dtype='float32')
             refine_anchor = bbox_utils.bbox_decode(
                 fam_reg1, pd_init_anchors, pd_target_means, pd_target_stds)
             #refine_anchor = bbox_utils.bbox_decode(
@@ -506,7 +512,6 @@ class S2ANetHead(nn.Layer):
 
     def get_prediction(self, nms_pre):
         refine_anchors = self.refine_anchor_list
-        print('refine_anchors ok ok ok ', refine_anchors)
         fam_cls_branch_list, fam_reg_branch_list, odm_cls_branch_list, odm_reg_branch_list = self.s2anet_head_out
         pred_scores, pred_bboxes = self.get_bboxes(
             odm_cls_branch_list,
@@ -857,9 +862,14 @@ class S2ANetHead(nn.Layer):
             else:
                 max_scores = paddle.max(scores, axis=1)
 
-            pd_target_means = paddle.to_tensor(np.array(self.target_means, dtype=np.float32), dtype='float32')
-            pd_target_stds = paddle.to_tensor(np.array(self.target_stds, dtype=np.float32), dtype='float32')
-            bboxes = bbox_utils.delta2rbox(anchors, bbox_pred, pd_target_means, pd_target_stds)
+            pd_target_means = paddle.to_tensor(
+                np.array(
+                    self.target_means, dtype=np.float32), dtype='float32')
+            pd_target_stds = paddle.to_tensor(
+                np.array(
+                    self.target_stds, dtype=np.float32), dtype='float32')
+            bboxes = bbox_utils.delta2rbox(anchors, bbox_pred, pd_target_means,
+                                           pd_target_stds)
             mlvl_bboxes.append(bboxes)
             mlvl_scores.append(scores)
 
