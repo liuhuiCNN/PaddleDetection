@@ -28,6 +28,8 @@ from visualize import visualize_box_mask
 from paddle.inference import Config
 from paddle.inference import create_predictor
 
+
+
 # Global dictionary
 SUPPORT_MODELS = {
     'YOLO',
@@ -36,6 +38,7 @@ SUPPORT_MODELS = {
     'FCOS',
     'SOLOv2',
     'TTFNet',
+    'S2ANet',
 }
 
 
@@ -121,15 +124,20 @@ class Detector(object):
         inputs = self.preprocess(image)
         np_boxes, np_masks = None, None
         input_names = self.predictor.get_input_names()
+        print('input_names', input_names)
         for i in range(len(input_names)):
             input_tensor = self.predictor.get_input_handle(input_names[i])
             input_tensor.copy_from_cpu(inputs[input_names[i]])
-
+            #print('cur input_tensor', input_tensor.shape, input_tensor)
+        #print('data ready', 'input_names', input_names)
         for i in range(warmup):
             self.predictor.run()
+            #print('run finish')
             output_names = self.predictor.get_output_names()
+            #print('output_names', output_names)
             boxes_tensor = self.predictor.get_output_handle(output_names[0])
             np_boxes = boxes_tensor.copy_to_cpu()
+            #print('get res')
             if self.pred_config.mask:
                 masks_tensor = self.predictor.get_output_handle(output_names[2])
                 np_masks = masks_tensor.copy_to_cpu()

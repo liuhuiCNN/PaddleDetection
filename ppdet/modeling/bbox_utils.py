@@ -534,7 +534,6 @@ def rbox2poly(rrects):
     polys = np.array(polys)
     return polys
 
-
 def pd_rbox2poly(rrects):
     """
     rrect:[x_ctr,y_ctr,w,h,angle]
