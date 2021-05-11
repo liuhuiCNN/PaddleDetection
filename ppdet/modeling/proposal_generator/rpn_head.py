@@ -133,11 +133,7 @@ class RPNHead(nn.Layer):
 
         anchors = self.anchor_generator(rpn_feats)
 
-        # TODO: Fix batch_size > 1 when testing.
-        if self.training:
-            batch_size = inputs['im_shape'].shape[0]
-        else:
-            batch_size = 1
+        batch_size = inputs['im_shape'].shape[0]
 
         rois, rois_num = self._gen_proposal(scores, deltas, anchors, inputs,
                                             batch_size)
