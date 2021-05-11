@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import glob
 import os
 import argparse
 import time
@@ -76,18 +76,23 @@ class Detector(object):
             trt_max_shape=trt_max_shape,
             trt_opt_shape=trt_opt_shape)
 
-    def preprocess(self, im):
+    def preprocess(self, image_dir):
         preprocess_ops = []
         for op_info in self.pred_config.preprocess_infos:
             new_op_info = op_info.copy()
             op_type = new_op_info.pop('type')
             preprocess_ops.append(eval(op_type)(**new_op_info))
-        im, im_info = preprocess(im, preprocess_ops,
-                                 self.pred_config.input_shape)
-        inputs = create_inputs(im, im_info)
+        input_im_lst = []
+        input_im_info_lst = []
+        for im_path in image_dir:
+            im, im_info = preprocess(im_path, preprocess_ops,
+                                     self.pred_config.input_shape)
+            input_im_lst.append(im)
+            input_im_info_lst.append(im_info)
+        inputs = create_inputs(input_im_lst, input_im_info_lst)
         return inputs
 
-    def postprocess(self, np_boxes, np_masks, inputs, threshold=0.5):
+    def postprocess(self, np_boxes, np_masks, inputs, np_boxes_num, threshold=0.5):
         # postprocess output of predictor
         results = {}
         if self.pred_config.arch in ['Face']:
@@ -99,19 +104,20 @@ class Detector(object):
             np_boxes[:, 4] *= h
             np_boxes[:, 5] *= w
         results['boxes'] = np_boxes
+        results['boxes_num'] = np_boxes_num
         if np_masks is not None:
             results['masks'] = np_masks
         return results
 
     def predict(self,
-                image,
+                image_paths,
                 threshold=0.5,
                 warmup=0,
                 repeats=1,
                 run_benchmark=False):
         '''
         Args:
-            image (str/np.ndarray): path of image/ np.ndarray read by cv2
+            image_paths (list): list of image path
             threshold (float): threshold of predicted box' score
         Returns:
             results (dict): include 'boxes': np.ndarray: shape:[N,6], N: number of box,
@@ -119,7 +125,7 @@ class Detector(object):
                             MaskRCNN's results include 'masks': np.ndarray:
                             shape: [N, im_h, im_w]
         '''
-        inputs = self.preprocess(image)
+        inputs = self.preprocess(image_paths)
         np_boxes, np_masks = None, None
         input_names = self.predictor.get_input_names()
         for i in range(len(input_names)):
@@ -141,6 +147,8 @@ class Detector(object):
             output_names = self.predictor.get_output_names()
             boxes_tensor = self.predictor.get_output_handle(output_names[0])
             np_boxes = boxes_tensor.copy_to_cpu()
+            boxes_num = self.predictor.get_output_handle(output_names[1])
+            np_boxes_num = boxes_num.copy_to_cpu()
             if self.pred_config.mask:
                 masks_tensor = self.predictor.get_output_handle(output_names[2])
                 np_masks = masks_tensor.copy_to_cpu()
@@ -153,10 +161,11 @@ class Detector(object):
         if not run_benchmark:
             if reduce(lambda x, y: x * y, np_boxes.shape) < 6:
                 print('[WARNNING] No object detected.')
-                results = {'boxes': np.array([])}
+                results = {'boxes': np.array([]),
+                           'boxes_num': [0]}
             else:
                 results = self.postprocess(
-                    np_boxes, np_masks, inputs, threshold=threshold)
+                    np_boxes, np_masks, inputs, np_boxes_num, threshold=threshold)
 
         return results
 
@@ -259,11 +268,15 @@ def create_inputs(im, im_info):
         inputs (dict): input of model
     """
     inputs = {}
-    inputs['image'] = np.array((im, )).astype('float32')
-    inputs['im_shape'] = np.array((im_info['im_shape'], )).astype('float32')
-    inputs['scale_factor'] = np.array(
-        (im_info['scale_factor'], )).astype('float32')
+    inputs['image'] = np.stack(im, axis=0)
+    np_im_shape = []
+    np_scale_factor = []
+    for e in im_info:
+        np_im_shape.append(np.array((e['im_shape'], )).astype('float32'))
+        np_scale_factor.append(np.array((e['scale_factor'],)).astype('float32'))
 
+    inputs['im_shape'] = np.concatenate(np_im_shape, axis=0)
+    inputs['scale_factor'] = np.concatenate(np_scale_factor, axis=0)
     return inputs
 
 
@@ -381,15 +394,26 @@ def load_predictor(model_dir,
     return predictor
 
 
-def visualize(image_file, results, labels, output_dir='output/', threshold=0.5):
+def visualize(image_dir, results, labels, output_dir='output/', threshold=0.5):
     # visualize the predict result
-    im = visualize_box_mask(image_file, results, labels, threshold=threshold)
-    img_name = os.path.split(image_file)[-1]
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    out_path = os.path.join(output_dir, img_name)
-    im.save(out_path, quality=95)
-    print("save result to: " + out_path)
+    start = 0
+    for idx, image_file in enumerate(image_dir):
+        im_bboxes_num = results['boxes_num'][idx]
+        im_results = {}
+        if 'boxes' in results:
+            im_results['boxes'] = results['boxes'][start:start+im_bboxes_num, :]
+        if 'masks' in results:
+            im_results['masks'] = results['masks'][start:start+im_bboxes_num, :]
+        if 'segm' in results:
+            im_results['segm'] = results['segm'][start:start+im_bboxes_num, :]
+        start += im_bboxes_num
+        im = visualize_box_mask(image_file, im_results, labels, threshold=threshold)
+        img_name = os.path.split(image_file)[-1]
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        out_path = os.path.join(output_dir, img_name)
+        im.save(out_path, quality=95)
+        print("save result to: " + out_path)
 
 
 def print_arguments(args):
@@ -407,10 +431,19 @@ def predict_image(detector):
             warmup=100,
             repeats=100,
             run_benchmark=True)
-    else:
-        results = detector.predict(FLAGS.image_file, FLAGS.threshold)
+    elif FLAGS.image_file != '':
+        results = detector.predict([FLAGS.image_file], FLAGS.threshold)
         visualize(
-            FLAGS.image_file,
+            [FLAGS.image_file],
+            results,
+            detector.pred_config.labels,
+            output_dir=FLAGS.output_dir,
+            threshold=FLAGS.threshold)
+    elif FLAGS.image_dir != '':
+        image_path_lst = glob.glob('{}/*'.format(FLAGS.image_dir))
+        results = detector.predict(image_path_lst, FLAGS.threshold)
+        visualize(
+            image_path_lst,
             results,
             detector.pred_config.labels,
             output_dir=FLAGS.output_dir,
@@ -480,6 +513,8 @@ def main():
     # predict from image
     if FLAGS.image_file != '':
         predict_image(detector)
+    if FLAGS.image_dir != '':
+        predict_image(detector)
     # predict from video file or camera video stream
     if FLAGS.video_file != '' or FLAGS.camera_id != -1:
         predict_video(detector, FLAGS.camera_id)
@@ -497,6 +532,8 @@ if __name__ == '__main__':
         required=True)
     parser.add_argument(
         "--image_file", type=str, default='', help="Path of image file.")
+    parser.add_argument(
+        "--image_dir", type=str, default='', help="Path of image file dir.")
     parser.add_argument(
         "--video_file", type=str, default='', help="Path of video file.")
     parser.add_argument(
