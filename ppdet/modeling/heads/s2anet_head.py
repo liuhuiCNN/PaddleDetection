@@ -359,7 +359,6 @@ class S2ANetHead(nn.Layer):
 
         for i in range(self.stacked_convs):
             ch_in = self.feat_out
-            # ch_in = int(self.feat_out / 8) if i == 0 else self.feat_out
 
             self.odm_cls_convs.add_sublayer(
                 'odm_cls_conv_{}'.format(i),
@@ -404,9 +403,9 @@ class S2ANetHead(nn.Layer):
             weight_attr=ParamAttr(initializer=Normal(0.0, 0.01)),
             bias_attr=ParamAttr(initializer=Constant(0)))
 
-        self.base_anchors = dict()
-        self.featmap_sizes = dict()
-        self.base_anchors = dict()
+        self.featmap_size_list = []
+        self.init_anchors_list = []
+        self.rbox_anchors_list = []
         self.refine_anchor_list = []
 
     def forward(self, feats):
@@ -416,8 +415,9 @@ class S2ANetHead(nn.Layer):
         odm_reg_branch_list = []
         odm_cls_branch_list = []
 
-        self.featmap_sizes = dict()
-        self.base_anchors = dict()
+        self.featmap_size_list = []
+        self.init_anchors_list = []
+        self.rbox_anchors_list = []
         self.refine_anchor_list = []
 
         for i, feat in enumerate(feats):
@@ -440,19 +440,16 @@ class S2ANetHead(nn.Layer):
 
             # prepare anchor
             featmap_size = feat.shape[-2:]
-            self.featmap_sizes[i] = featmap_size
+            self.featmap_sizes.append(featmap_size)
             init_anchors = self.anchor_generators[i].grid_anchors(
                 featmap_size, self.anchor_strides[i])
+            self.init_anchors_list.append(init_anchors)
+            rbox_anchors = bbox_utils.rect2rbox(init_anchors)
+            self.rbox_anchors_list.append(rbox_anchors)
 
-            init_anchors = bbox_utils.rect2rbox(init_anchors)
-            self.base_anchors[(i, featmap_size[0])] = init_anchors
-
-            #fam_reg1 = fam_reg
-            #fam_reg1.stop_gradient = True
             refine_anchor = bbox_utils.bbox_decode(
                 fam_reg.detach(), init_anchors, self.target_means,
                 self.target_stds)
-
             self.refine_anchor_list.append(refine_anchor)
 
             if self.align_conv_type == 'AlignConv':
